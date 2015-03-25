@@ -1,0 +1,345 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>js mandelbrot</title>
+
+<style>
+* { margin: 0; padding: 0;}
+
+body, html { height:100%; }
+
+#mandel_canvas {
+    position:absolute;
+    width:100%;
+    height:100%;
+}
+</style>
+
+<script>
+
+function point(x, y)
+{
+    this.x = x;
+    this.y = y;
+}
+
+function color(r, g, b, a)
+{
+    this.r = r;
+    this.g = g;
+    this.b = b;
+    this.a = a;
+}
+
+function mandel_renderer(canvas)
+{
+    this.depth = 255;
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.centre = new point(-0.75, 0);
+    this.width = 4;
+    
+    this.iter_count = 0;
+    this.iters_per_draw = 7 * 1000 * 1000;
+    this.draw_index = 0;
+    
+    // TODO: separate class
+    this.block_size = 64;
+    this.block_pixel_size = 1;
+    this.blocks = [];
+    this.first_block_pos = new point(0, 0);
+    this.block_table_width = 1;
+    this.block_table_height = 0;
+    
+    this.calculate_block = function(p)
+    {
+        var result = [];
+        var counter = 0;
+        
+        for (var i = 0; i != this.block_size; i++)
+        {
+            for (var j = 0; j != this.block_size; j++)
+            {
+                result[counter] = this.calculate_point(new point(p.x + j * this.block_pixel_size, p.y - i * this.block_pixel_size));
+                counter++;
+            }
+        }
+        
+        return result;
+    }
+    
+    this.block_to_pixel_data = function(block, pix)
+    {
+        var limit = this.block_size * this.block_size;
+        
+        var inc = 0;
+        
+        for (var i = 0; i < limit; i++)
+        {
+            var c = this.colorise(block[i]);
+            pix.data[inc++] = c.r;
+            pix.data[inc++] = c.g;
+            pix.data[inc++] = c.b;
+            pix.data[inc++] = c.a;
+        }
+    }
+    
+    this.calculate_point = function(p)
+    {
+        var a = p.x;
+        var b = p.y;
+        var iter = 0;
+        
+        while (iter < this.depth && a * a + b * b < 4)
+        {
+            var a2 = a;
+            var b2 = b;
+            a = a2 * a2 - b2 * b2 + p.x;
+            b = 2 * a2 * b2 + p.y;
+            
+            iter++;
+        }
+        
+        this.iter_count += iter;
+        
+        if (iter == this.depth && a * a + b * b < 4)
+        {
+            iter++;
+        }
+        
+        return iter;
+    }
+    
+    this.colorise = function(point_value)
+    {
+        if (point_value <= this.depth)
+        {
+            return new color(255 * (1 - point_value / (this.depth)), 255, 255 * (1 - point_value / (this.depth)), 255);
+        }
+        
+        return new color(0, 0, 0, 255);
+    }
+    
+    this.draw = function()
+    {
+        //var now = new Date();
+        
+        this.draw_index++;
+        
+        var pixel_width = this.width / parseInt(this.canvas.width);
+        var aspect_ratio = parseInt(this.canvas.width) / parseInt(this.canvas.height);
+        
+        this.first_block_pos.x = this.centre.x - 0.5 * this.width;
+        this.first_block_pos.y = this.centre.y + 0.5 / aspect_ratio * this.width;
+        
+        this.block_pixel_size = pixel_width;
+        this.blocks = [];
+        this.block_table_width = Math.ceil(this.width / (this.block_size * this.block_pixel_size));
+        this.block_table_height = Math.ceil((this.width / aspect_ratio) / (this.block_size * this.block_pixel_size));
+        
+        var block_index = 0;
+        
+        this.draw_blocks({
+            draw_index: this.draw_index,
+            i: 0,
+            j: 0,
+            block_index: 0});
+        /*
+        for (var i = 0; i < block_table_height; i++)
+        {
+            for (var j = 0; j < this.block_table_width; j++)
+            {
+                var pix = this.ctx.createImageData(this.block_size, this.block_size);
+                
+                this.blocks[block_index] = this.calculate_block(
+                    new point(
+                        this.first_block_pos.x + j * this.block_size * this.block_pixel_size,
+                        this.first_block_pos.y - i * this.block_size * this.block_pixel_size));
+                
+                this.block_to_pixel_data(this.blocks[block_index], pix);
+                
+                this.ctx.putImageData(pix, this.first_block_pos.x + j * this.block_size, this.first_block_pos.y + i * this.block_size);
+                
+                block_index++;
+            }
+        }
+        */
+        
+        /*
+        for (var y = 0; y < this.canvas.height; y++)
+        {
+            var pix = this.ctx.createImageData(parseInt(this.canvas.width), 1);
+            var inc = 0;
+            
+            for (var x = 0; x < this.canvas.width; x++)
+            {
+                var fractal_pos = new point(
+                    this.centre.x + -0.5 * this.width + x * pixel_width,
+                    this.centre.y + 0.5 / aspect_ratio * this.width - pixel_width * y);
+                
+                var c = this.colorise(this.calculate_point(fractal_pos));
+                pix.data[inc++] = c.r;
+                pix.data[inc++] = c.g;
+                pix.data[inc++] = c.b;
+                pix.data[inc++] = c.a;
+            }
+            
+            this.ctx.putImageData(pix, 0, y);        
+        }
+        alert((new Date()) - now);
+        */
+    }
+    
+    this.draw_blocks = function(draw_state)
+    {
+        if (draw_state.draw_index != this.draw_index)
+        {
+            return;
+        }
+        
+        var iter_target = Math.ceil((this.iter_count + 1) / this.iters_per_draw) * this.iters_per_draw;
+        
+        while (this.iter_count < iter_target)
+        {
+            var pix = this.ctx.createImageData(this.block_size, this.block_size);
+            
+            this.blocks[draw_state.block_index] = this.calculate_block(
+                new point(
+                    this.first_block_pos.x + draw_state.j * this.block_size * this.block_pixel_size,
+                    this.first_block_pos.y - draw_state.i * this.block_size * this.block_pixel_size));
+            
+            this.block_to_pixel_data(this.blocks[draw_state.block_index], pix);
+            
+            try
+            {
+                this.ctx.putImageData(pix, this.first_block_pos.x + draw_state.j * this.block_size, this.first_block_pos.y + draw_state.i * this.block_size);
+            }
+            catch (e)
+            {
+                alert(this.centre.x + ", " + this.centre.y + ", " + this.first_block_pos.x + ", " + draw_state.j + ", " + this.block_size + ", " + this.first_block_pos.y + ", " + draw_state.i);
+            }
+            
+            draw_state.block_index++;
+            
+            draw_state.j++;
+            
+            if (draw_state.j >= this.block_table_width)
+            {
+                draw_state.j = 0;
+                draw_state.i++;
+                
+                if (draw_state.i >= this.block_table_height)
+                {
+                    return;
+                }
+            }
+        }
+        
+        var that = this;
+        setTimeout(function() { that.draw_blocks(draw_state); }, 0);
+    }
+    
+    this.scale = function(factor, pos)
+    {
+        pos = (pos || this.centre);
+        this.centre = {x: factor * this.centre.x + (1 - factor) * pos.x, y: factor * this.centre.y + (1 - factor) * pos.y};
+        
+        this.width *= factor;
+        
+        this.draw();
+    }
+    
+    this.move_centre = function(p)
+    {
+        this.centre.x += p.x;
+        this.centre.y += p.y;
+    }
+}
+
+var renderer = null;
+var last_mousedown = new point(0, 0);
+var resize_timeout = null;
+
+window.onload = function()
+{
+    var canvas = document.getElementById('mandel_canvas');
+    
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    renderer = new mandel_renderer(canvas);
+    renderer.draw();
+}
+
+window.onresize = function()
+{
+    clearTimeout(resize_timeout);
+    
+    resize_timeout = setTimeout(
+        function()
+        {
+            var canvas = document.getElementById('mandel_canvas');
+            
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            renderer.draw();
+        },
+        300);
+}
+
+document.onmousedown = function(e)
+{
+    last_mousedown.x = e.clientX;
+    last_mousedown.y = e.clientY;
+}
+
+document.onmouseup = function(e)
+{
+    var diff = new point(e.clientX - last_mousedown.x, e.clientY - last_mousedown.y);
+    var pixel_size = renderer.width / parseInt(window.innerWidth);
+    renderer.move_centre(new point(-diff.x * pixel_size, diff.y * pixel_size));
+    renderer.draw();
+}
+
+document.onmousewheel = function(e)
+{
+    var pixel_size = renderer.width / parseInt(window.innerWidth);
+    var aspect_ratio = parseInt(window.innerWidth) / parseInt(window.innerHeight);
+
+    renderer.scale(
+        e.wheelDelta > 0 ? 2/3 : 3/2,
+        new point(
+            renderer.centre.x + -0.5 * renderer.width + e.clientX * pixel_size,
+            renderer.centre.y + 0.5 / aspect_ratio * renderer.width - pixel_size * e.clientY));
+}
+
+// Firefox seriously bazzed up mouse scrolling.
+if (/Firefox/i.test(navigator.userAgent))
+{
+    document.addEventListener(
+        "DOMMouseScroll",
+        function(e)
+        {
+            e.wheelDelta = -120 * e.detail;
+            document.onmousewheel(e);
+        });
+}
+
+document.onkeydown = function(e)
+{
+    if (e.keyCode == 68)
+    {
+        renderer.depth = parseInt(prompt("Enter new depth", "255"));
+        renderer.draw();
+    }
+}
+
+</script>
+
+</head>
+<body>
+
+<canvas id='mandel_canvas'>
+
+</body>
+</html>
