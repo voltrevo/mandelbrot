@@ -38,30 +38,7 @@ var lerp = function(a, b, r) {
   return ret
 }
 
-var createInterpolator = function(nodes) {
-  return function(r) {
-    var i = 0
-
-    while (i < nodes.length && r > nodes[i][0]) {
-      i++
-    }
-
-    return lerp(
-      nodes[i - 1] && nodes[i - 1][1],
-      nodes[i] && nodes[i][1],
-      nodes[i] && nodes[i - 1] && ((r - nodes[i - 1][0]) / (nodes[i][0] - nodes[i - 1][0]))
-    )
-  }
-}
-
-var interpolator = createInterpolator([
-  [0, [1, 1, 1]],
-  [3, [0, 0, 1]],
-  [4, [0, 1, 0]],
-  [7, [0, 0, 0]]
-])
-
-var createGeneratedInterpolator = function(nodeGenerator) {
+var createInterpolator = function(nodeGenerator) {
   return function(r) {
     var floorOfR = Math.floor(r)
     var leftNode = nodeGenerator(floorOfR)
@@ -71,9 +48,9 @@ var createGeneratedInterpolator = function(nodeGenerator) {
   }
 }
 
-var createNodeGenerator = function() {
-  var rand = Math.random()
-  var cacheMap = {}
+var createNodeGenerator = function(seed) {
+  var rand = seedRand(seed)
+  var cacheMap = []
   return function(r) {
     var node = cacheMap[r]
 
@@ -86,9 +63,16 @@ var createNodeGenerator = function() {
   }
 }
 
-var createRandomInterpolator = function() {
-  return createGeneratedInterpolator(createNodeGenerator())
+var createRandomInterpolator = function(seed) {
+  var offset = seedRand(seedRand(seed))
+  var baseInterpolator = createInterpolator(createNodeGenerator(seed))
+
+  return function(r) {
+    return baseInterpolator(r + offset)
+  }
 }
+
+var interpolator = createRandomInterpolator(Math.floor(966908800 * Math.sqrt(2)))
 
 var mandelRenderer = function(canvas) {
   this.depth = 255
@@ -192,7 +176,6 @@ var mandelRenderer = function(canvas) {
     this.firstBlockPos.y = this.centre.y + 0.5 / aspectRatio * this.width
 
     this.blockPixelSize = pixelWidth
-    //this.blocks = []
     this.blockTableWidth = Math.ceil(this.width / (this.blockSize * this.blockPixelSize))
 
     this.blockTableHeight = Math.ceil(
@@ -293,7 +276,9 @@ window.onload = function() {
 window.addEventListener('keydown', function(evt) {
   if (evt.keyCode === 67) {
     var start = new Date()
-    interpolator = createRandomInterpolator()
+    var mult = Math.floor(Math.random() * 1000000000)
+    console.log('Seed: ' + mult)
+    interpolator = createRandomInterpolator(Math.floor(mult * Math.sqrt(2)))
     renderer.draw(true)
     var end = new Date()
     console.log(end - start)
