@@ -73,21 +73,22 @@ var createGeneratedInterpolator = function(nodeGenerator) {
 
 var createNodeGenerator = function() {
   var rand = Math.random()
+  var cacheMap = {}
   return function(r) {
-    return [seedRand(r + rand), seedRand(r + rand + 0.333), seedRand(r + rand + 0.667)]
+    var node = cacheMap[r]
+
+    if (!node) {
+      node = [seedRand(r + rand), seedRand(r + rand + 0.333), seedRand(r + rand + 0.667)]
+      cacheMap[r] = node
+    }
+
+    return node
   }
 }
 
 var createRandomInterpolator = function() {
   return createGeneratedInterpolator(createNodeGenerator())
 }
-
-window.addEventListener('keydown', function(evt) {
-  if (evt.keyCode === 67) {
-    interpolator = createRandomInterpolator()
-    renderer.draw()
-  }
-})
 
 var mandelRenderer = function(canvas) {
   this.depth = 255
@@ -180,7 +181,8 @@ var mandelRenderer = function(canvas) {
     return new color(0, 0, 0, 255)
   }
 
-  this.draw = function() {
+  this.draw = function(cached) {
+    cached = (cached !== undefined ? cached : false)
     this.drawIndex++
 
     var pixelWidth = this.width / parseInt(this.canvas.width)
@@ -190,7 +192,7 @@ var mandelRenderer = function(canvas) {
     this.firstBlockPos.y = this.centre.y + 0.5 / aspectRatio * this.width
 
     this.blockPixelSize = pixelWidth
-    this.blocks = []
+    //this.blocks = []
     this.blockTableWidth = Math.ceil(this.width / (this.blockSize * this.blockPixelSize))
 
     this.blockTableHeight = Math.ceil(
@@ -202,7 +204,8 @@ var mandelRenderer = function(canvas) {
       drawIndex: this.drawIndex,
       i: 0,
       j: 0,
-      blockIndex: 0
+      blockIndex: 0,
+      cached: cached
     })
   }
 
@@ -216,10 +219,12 @@ var mandelRenderer = function(canvas) {
     while (this.iterCount < iterTarget) {
       var pix = this.ctx.createImageData(this.blockSize, this.blockSize)
 
-      this.blocks[drawState.blockIndex] = this.calculateBlock(
-        new point(
-          this.firstBlockPos.x + drawState.j * this.blockSize * this.blockPixelSize,
-          this.firstBlockPos.y - drawState.i * this.blockSize * this.blockPixelSize))
+      if (!drawState.cached) {
+        this.blocks[drawState.blockIndex] = this.calculateBlock(
+          new point(
+            this.firstBlockPos.x + drawState.j * this.blockSize * this.blockPixelSize,
+            this.firstBlockPos.y - drawState.i * this.blockSize * this.blockPixelSize))
+      }
 
       this.blockToPixelData(this.blocks[drawState.blockIndex], pix)
 
@@ -244,9 +249,13 @@ var mandelRenderer = function(canvas) {
 
     var that = this
 
-    setTimeout(function() {
+    if (drawState.cached) {
       that.drawBlocks(drawState)
-    }, 0)
+    } else {
+      setTimeout(function() {
+        that.drawBlocks(drawState)
+      }, 0)
+    }
   }
 
   this.scale = function(factor, pos) {
@@ -281,8 +290,17 @@ window.onload = function() {
   renderer.draw()
 }
 
-// TODO: addEventListener
-window.onresize = function() {
+window.addEventListener('keydown', function(evt) {
+  if (evt.keyCode === 67) {
+    var start = new Date()
+    interpolator = createRandomInterpolator()
+    renderer.draw(true)
+    var end = new Date()
+    console.log(end - start)
+  }
+})
+
+window.addEventListener('resize', function() {
   clearTimeout(resizeTimeout)
 
   resizeTimeout = setTimeout(function() {
@@ -292,7 +310,7 @@ window.onresize = function() {
     canvas.height = window.innerHeight
     renderer.draw()
   }, 300)
-}
+})
 
 document.onmousedown = function(e) {
   lastMousedown.x = e.clientX
