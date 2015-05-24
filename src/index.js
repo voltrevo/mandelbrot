@@ -8,7 +8,7 @@ var lastMousedown = {x: 0, y: 0}
 var resizeTimeout = null
 var colorSchemeSeedOffset = 0
 
-window.onload = function() {
+window.addEventListener('load', function() {
   var canvas = document.getElementById('mandelDisplay')
 
   canvas.width = window.innerWidth
@@ -16,7 +16,7 @@ window.onload = function() {
 
   renderer = new Renderer(canvas)
   renderer.draw()
-}
+})
 
 window.addEventListener('keydown', function(evt) {
   if (evt.keyCode === 67) {
@@ -43,38 +43,30 @@ window.addEventListener('resize', function() {
   }, 300)
 })
 
-document.onmousedown = function(e) {
+document.addEventListener('mousedown', function(e) {
   lastMousedown.x = e.clientX
   lastMousedown.y = e.clientY
-}
+})
 
-document.onmouseup = function(e) {
+document.addEventListener('mouseup', function(e) {
   var diff = {x: e.clientX - lastMousedown.x, y: e.clientY - lastMousedown.y}
   var pixelSize = renderer.width / parseInt(window.innerWidth)
   renderer.moveCentre({x: -diff.x * pixelSize, y: diff.y * pixelSize})
   renderer.draw()
-}
+})
 
-document.onmousewheel = function(e) {
+document.addEventListener('wheel', function(e) {
   var pixelSize = renderer.width / parseInt(window.innerWidth)
   var aspectRatio = parseInt(window.innerWidth) / parseInt(window.innerHeight)
 
   renderer.scale(
-    e.wheelDelta > 0 ? 2/3 : 3/2,
+    e.deltaY < 0 ? 2/3 : 3/2,
     {
       x: renderer.centre.x + -0.5 * renderer.width + e.clientX * pixelSize,
       y: renderer.centre.y + 0.5 / aspectRatio * renderer.width - pixelSize * e.clientY
     }
   )
-}
-
-// Firefox seriously bazzed up mouse scrolling.
-if (/Firefox/i.test(navigator.userAgent)) {
-  document.addEventListener('DOMMouseScroll', function(e) {
-    e.wheelDelta = -120 * e.detail
-    document.onmousewheel(e)
-  })
-}
+})
 
 document.addEventListener('keydown', function(e) {
   if (e.keyCode === 68) {
