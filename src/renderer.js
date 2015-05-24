@@ -3,35 +3,97 @@
 var colorScheme = require('./colorScheme')
 
 module.exports = function Renderer(canvas) {
-  this.depth = 255
-  this.canvas = canvas
-  this.ctx = canvas.getContext('2d')
-  this.centre = {x: -0.75, y: 0}
-  this.width = 4
+  var self = this
 
-  this.iterCount = 0
-  this.itersPerDraw = 7 * 1000 * 1000
-  this.drawIndex = 0
+  self.depth = 500
+  self.canvas = canvas
+  self.ctx = canvas.getContext('2d')
+  self.centre = {x: -0.75, y: 0}
+  self.width = 4
 
-  this.colorScheme = colorScheme.createRandom(colorScheme.magicValue)
+  self.iterCount = 0
+  self.itersPerDraw = 7 * 1000 * 1000
+  self.drawIndex = 0
+
+  self.colorScheme = colorScheme.createRandom(colorScheme.magicValue)
 
   // TODO: separate class
-  this.blockSize = 64
-  this.blockPixelSize = 1
-  this.blocks = []
-  this.firstBlockPos = {x: 0, y: 0}
-  this.blockTableWidth = 1
-  this.blockTableHeight = 0
+  self.blockSize = 64
+  self.blockPixelSize = 1
+  self.blocks = []
+  self.firstBlockPos = {x: 0, y: 0}
+  self.blockTableWidth = 1
+  self.blockTableHeight = 0
 
-  this.calculateBlock = function(p) {
+  self.updateSize = function() {
+    canvas.width = canvas.parentNode.clientWidth
+    canvas.height = canvas.parentNode.clientHeight
+  }
+
+  ;(function() {
+    var lastMousedown = {x: 0, y: 0}
+    var colorSchemeSeedOffset = 0
+
+    self.updateSize()
+
+    canvas.parentNode.addEventListener('keydown', function(evt) {
+      if (evt.keyCode === 67) {
+        var start = new Date()
+
+        colorSchemeSeedOffset += (!evt.shiftKey ? 1 : -1)
+
+        self.colorScheme = colorScheme.createRandom(
+          colorScheme.magicValue + colorSchemeSeedOffset
+        )
+
+        self.draw(true)
+        var end = new Date()
+        console.log(end - start)
+      }
+    })
+
+    canvas.addEventListener('mousedown', function(e) {
+      lastMousedown.x = e.clientX
+      lastMousedown.y = e.clientY
+    })
+
+    canvas.addEventListener('mouseup', function(e) {
+      var diff = {x: e.clientX - lastMousedown.x, y: e.clientY - lastMousedown.y}
+      var pixelSize = self.width / parseInt(window.innerWidth)
+      self.moveCentre({x: -diff.x * pixelSize, y: diff.y * pixelSize})
+      self.draw()
+    })
+
+    canvas.addEventListener('wheel', function(e) {
+      var pixelSize = self.width / parseInt(window.innerWidth)
+      var aspectRatio = parseInt(window.innerWidth) / parseInt(window.innerHeight)
+
+      self.scale(
+        e.deltaY < 0 ? 2/3 : 3/2,
+        {
+          x: self.centre.x + -0.5 * self.width + e.clientX * pixelSize,
+          y: self.centre.y + 0.5 / aspectRatio * self.width - pixelSize * e.clientY
+        }
+      )
+    })
+
+    canvas.parentNode.addEventListener('keydown', function(e) {
+      if (e.keyCode === 68) {
+        self.depth = parseInt(window.prompt('Enter new depth', '500'))
+        self.draw()
+      }
+    })
+  })()
+
+  self.calculateBlock = function(p) {
     var result = []
     var counter = 0
 
-    for (var i = 0; i !== this.blockSize; i++) {
-      for (var j = 0; j !== this.blockSize; j++) {
-        result[counter] = this.calculatePoint({
-          x: p.x + j * this.blockPixelSize,
-          y: p.y - i * this.blockPixelSize
+    for (var i = 0; i !== self.blockSize; i++) {
+      for (var j = 0; j !== self.blockSize; j++) {
+        result[counter] = self.calculatePoint({
+          x: p.x + j * self.blockPixelSize,
+          y: p.y - i * self.blockPixelSize
         })
 
         counter++
@@ -41,13 +103,13 @@ module.exports = function Renderer(canvas) {
     return result
   }
 
-  this.blockToPixelData = function(block, pix) {
-    var limit = this.blockSize * this.blockSize
+  self.blockToPixelData = function(block, pix) {
+    var limit = self.blockSize * self.blockSize
 
     var inc = 0
 
     for (var i = 0; i < limit; i++) {
-      var c = this.colorise(block[i])
+      var c = self.colorise(block[i])
       pix.data[inc++] = c.r
       pix.data[inc++] = c.g
       pix.data[inc++] = c.b
@@ -55,14 +117,14 @@ module.exports = function Renderer(canvas) {
     }
   }
 
-  this.calculatePoint = function(p) {
+  self.calculatePoint = function(p) {
     var a = p.x
     var b = p.y
     var iter = 0
     var radius = 0
     var lastRadius = 0
 
-    while (iter < this.depth && (radius = a * a + b * b) < 4) {
+    while (iter < self.depth && (radius = a * a + b * b) < 4) {
       lastRadius = radius
       var a2 = a
       var b2 = b
@@ -72,18 +134,18 @@ module.exports = function Renderer(canvas) {
       iter++
     }
 
-    this.iterCount += iter
+    self.iterCount += iter
 
-    if (iter === this.depth && a * a + b * b < 4) {
+    if (iter === self.depth && a * a + b * b < 4) {
       iter++
     }
 
     return iter + (4 - lastRadius) / (radius - lastRadius)
   }
 
-  this.colorise = function(pointValue) {
-    if (pointValue <= this.depth) {
-      var interpolant = this.colorScheme(Math.log(pointValue + 1))
+  self.colorise = function(pointValue) {
+    if (pointValue <= self.depth) {
+      var interpolant = self.colorScheme(Math.log(pointValue + 1))
       return {
         r: 255 * interpolant[0],
         g: 255 * interpolant[1],
@@ -100,26 +162,26 @@ module.exports = function Renderer(canvas) {
     }
   }
 
-  this.draw = function(cached) {
+  self.draw = function(cached) {
     cached = (cached !== undefined ? cached : false)
-    this.drawIndex++
+    self.drawIndex++
 
-    var pixelWidth = this.width / parseInt(this.canvas.width)
-    var aspectRatio = parseInt(this.canvas.width) / parseInt(this.canvas.height)
+    var pixelWidth = self.width / parseInt(self.canvas.width)
+    var aspectRatio = parseInt(self.canvas.width) / parseInt(self.canvas.height)
 
-    this.firstBlockPos.x = this.centre.x - 0.5 * this.width
-    this.firstBlockPos.y = this.centre.y + 0.5 / aspectRatio * this.width
+    self.firstBlockPos.x = self.centre.x - 0.5 * self.width
+    self.firstBlockPos.y = self.centre.y + 0.5 / aspectRatio * self.width
 
-    this.blockPixelSize = pixelWidth
-    this.blockTableWidth = Math.ceil(this.width / (this.blockSize * this.blockPixelSize))
+    self.blockPixelSize = pixelWidth
+    self.blockTableWidth = Math.ceil(self.width / (self.blockSize * self.blockPixelSize))
 
-    this.blockTableHeight = Math.ceil(
-      (this.width / aspectRatio) /
-      (this.blockSize * this.blockPixelSize)
+    self.blockTableHeight = Math.ceil(
+      (self.width / aspectRatio) /
+      (self.blockSize * self.blockPixelSize)
     )
 
-    this.drawBlocks({
-      drawIndex: this.drawIndex,
+    self.drawBlocks({
+      drawIndex: self.drawIndex,
       i: 0,
       j: 0,
       blockIndex: 0,
@@ -127,69 +189,67 @@ module.exports = function Renderer(canvas) {
     })
   }
 
-  this.drawBlocks = function(drawState) {
-    if (drawState.drawIndex !== this.drawIndex) {
+  self.drawBlocks = function(drawState) {
+    if (drawState.drawIndex !== self.drawIndex) {
       return
     }
 
-    var iterTarget = Math.ceil((this.iterCount + 1) / this.itersPerDraw) * this.itersPerDraw
+    var iterTarget = Math.ceil((self.iterCount + 1) / self.itersPerDraw) * self.itersPerDraw
 
-    while (this.iterCount < iterTarget) {
-      var pix = this.ctx.createImageData(this.blockSize, this.blockSize)
+    while (self.iterCount < iterTarget) {
+      var pix = self.ctx.createImageData(self.blockSize, self.blockSize)
 
       if (!drawState.cached) {
-        this.blocks[drawState.blockIndex] = this.calculateBlock({
-          x: this.firstBlockPos.x + drawState.j * this.blockSize * this.blockPixelSize,
-          y: this.firstBlockPos.y - drawState.i * this.blockSize * this.blockPixelSize
+        self.blocks[drawState.blockIndex] = self.calculateBlock({
+          x: self.firstBlockPos.x + drawState.j * self.blockSize * self.blockPixelSize,
+          y: self.firstBlockPos.y - drawState.i * self.blockSize * self.blockPixelSize
         })
       }
 
-      this.blockToPixelData(this.blocks[drawState.blockIndex], pix)
+      self.blockToPixelData(self.blocks[drawState.blockIndex], pix)
 
-      this.ctx.putImageData(
-        pix, this.firstBlockPos.x + drawState.j * this.blockSize,
-        this.firstBlockPos.y + drawState.i * this.blockSize
+      self.ctx.putImageData(
+        pix, self.firstBlockPos.x + drawState.j * self.blockSize,
+        self.firstBlockPos.y + drawState.i * self.blockSize
       )
 
       drawState.blockIndex++
 
       drawState.j++
 
-      if (drawState.j >= this.blockTableWidth) {
+      if (drawState.j >= self.blockTableWidth) {
         drawState.j = 0
         drawState.i++
 
-        if (drawState.i >= this.blockTableHeight) {
+        if (drawState.i >= self.blockTableHeight) {
           return
         }
       }
     }
 
-    var that = this
-
     if (drawState.cached) {
-      that.drawBlocks(drawState)
+      self.drawBlocks(drawState)
     } else {
       setTimeout(function() {
-        that.drawBlocks(drawState)
+        self.drawBlocks(drawState)
       }, 0)
     }
   }
 
-  this.scale = function(factor, pos) {
-    pos = (pos || this.centre)
-    this.centre = {
-      x: factor * this.centre.x + (1 - factor) * pos.x,
-      y: factor * this.centre.y + (1 - factor) * pos.y
+  self.scale = function(factor, pos) {
+    pos = (pos || self.centre)
+    self.centre = {
+      x: factor * self.centre.x + (1 - factor) * pos.x,
+      y: factor * self.centre.y + (1 - factor) * pos.y
     }
 
-    this.width *= factor
+    self.width *= factor
 
-    this.draw()
+    self.draw()
   }
 
-  this.moveCentre = function(p) {
-    this.centre.x += p.x
-    this.centre.y += p.y
+  self.moveCentre = function(p) {
+    self.centre.x += p.x
+    self.centre.y += p.y
   }
 }
