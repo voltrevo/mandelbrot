@@ -6,6 +6,7 @@ var Renderer = require('./renderer')
 var renderer = null
 var lastMousedown = {x: 0, y: 0}
 var resizeTimeout = null
+var colorSchemeSeedOffset = 0
 
 window.onload = function() {
   var canvas = document.getElementById('mandelDisplay')
@@ -20,9 +21,10 @@ window.onload = function() {
 window.addEventListener('keydown', function(evt) {
   if (evt.keyCode === 67) {
     var start = new Date()
-    var mult = Math.floor(Math.random() * 1000000000)
-    console.log('Seed: ' + mult)
-    renderer.colorScheme = colorScheme.createRandom(Math.floor(mult * Math.sqrt(2)))
+
+    colorSchemeSeedOffset += (!evt.shiftKey ? 1 : -1)
+    renderer.colorScheme = colorScheme.createRandom(colorScheme.magicValue + colorSchemeSeedOffset)
+
     renderer.draw(true)
     var end = new Date()
     console.log(end - start)
