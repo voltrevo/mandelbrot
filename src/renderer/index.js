@@ -144,9 +144,14 @@ module.exports = function Renderer(canvas) {
     }
   }
 
-  self.draw = function(cached) {
+  self.debugStart = null
+  self.debugStop = null
+
+  self.draw = function(cached, pos) {
+    pos = pos || self.centre
+    self.debugStart = new Date()
     cached = (cached !== undefined ? cached : false)
-    self.drawIndex++
+    self.drawIndex += (!cached ? 1 : 0)
 
     var pixelWidth = self.width / parseInt(self.canvas.width)
     var aspectRatio = parseInt(self.canvas.width) / parseInt(self.canvas.height)
@@ -162,11 +167,32 @@ module.exports = function Renderer(canvas) {
       (self.blockSize * self.blockPixelSize)
     )
 
+    var indexMap = []
+    for (var i = 0; i !== self.blockTableWidth * self.blockTableHeight; i++) {
+      indexMap.push(i)
+    }
+
+    var indexToDist = function(index) {
+      var i = Math.floor(index / self.blockTableWidth)
+      var j = index % self.blockTableWidth
+
+      var indexPos = {
+        x: self.firstBlockPos.x + j * self.blockSize * self.blockPixelSize,
+        y: self.firstBlockPos.y - i * self.blockSize * self.blockPixelSize
+      }
+
+      var dx = indexPos.x - pos.x
+      var dy = indexPos.y - pos.y
+
+      return dx * dx + aspectRatio * dy * dy
+    }
+
+    indexMap.sort(function(a, b) { return indexToDist(a) - indexToDist(b) })
+
     self.drawBlocks({
       drawIndex: self.drawIndex,
-      i: 0,
-      j: 0,
       blockIndex: 0,
+      indexMap: indexMap,
       cached: cached
     })
   }
@@ -181,31 +207,30 @@ module.exports = function Renderer(canvas) {
     while (self.iterCount < iterTarget) {
       var pix = self.ctx.createImageData(self.blockSize, self.blockSize)
 
+      var mappedIndex = drawState.indexMap[drawState.blockIndex]
+      var i = Math.floor(mappedIndex / self.blockTableWidth)
+      var j = mappedIndex % self.blockTableWidth
+
       if (!drawState.cached) {
-        self.blocks[drawState.blockIndex] = self.calculateBlock({
-          x: self.firstBlockPos.x + drawState.j * self.blockSize * self.blockPixelSize,
-          y: self.firstBlockPos.y - drawState.i * self.blockSize * self.blockPixelSize
+        self.blocks[mappedIndex] = self.calculateBlock({
+          x: self.firstBlockPos.x + j * self.blockSize * self.blockPixelSize,
+          y: self.firstBlockPos.y - i * self.blockSize * self.blockPixelSize
         })
       }
 
-      self.blockToPixelData(self.blocks[drawState.blockIndex], pix)
+      self.blockToPixelData(self.blocks[mappedIndex], pix)
 
       self.ctx.putImageData(
-        pix, self.firstBlockPos.x + drawState.j * self.blockSize,
-        self.firstBlockPos.y + drawState.i * self.blockSize
+        pix, self.firstBlockPos.x + j * self.blockSize,
+        self.firstBlockPos.y + i * self.blockSize
       )
 
       drawState.blockIndex++
 
-      drawState.j++
-
-      if (drawState.j >= self.blockTableWidth) {
-        drawState.j = 0
-        drawState.i++
-
-        if (drawState.i >= self.blockTableHeight) {
-          return
-        }
+      if (drawState.blockIndex === drawState.indexMap.length) {
+        self.debugStop = new Date()
+        console.log(self.debugStop - self.debugStart)
+        return
       }
     }
 
@@ -220,6 +245,7 @@ module.exports = function Renderer(canvas) {
 
   self.scale = function(factor, pos) {
     pos = (pos || self.centre)
+
     self.centre = {
       x: factor * self.centre.x + (1 - factor) * pos.x,
       y: factor * self.centre.y + (1 - factor) * pos.y
@@ -227,7 +253,7 @@ module.exports = function Renderer(canvas) {
 
     self.width *= factor
 
-    self.draw()
+    self.draw(false, pos)
   }
 
   self.moveCentre = function(p) {
