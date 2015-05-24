@@ -1,5 +1,8 @@
 'use strict'
 
+var lerp = require('./lerp')
+var rand = require('./rand')
+
 var point = function(x, y) {
   return {
     x: x,
@@ -16,28 +19,6 @@ var color = function(r, g, b, a) {
   }
 }
 
-var seedRand = function(seed) {
-  for (var i = 0; i !== 10; ++i) {
-    seed -= (seed * seed + 1) / (2 * seed)
-  }
-
-  seed *= 10000
-  return seed - Math.floor(seed)
-}
-
-var lerp = function(a, b, r) {
-  if (!a || !b) {
-    return a || b
-  }
-
-  var ret = new Array(a.length)
-  for (var i = 0; i !== ret.length; i++) {
-    ret[i] = a[i] + (b[i] - a[i]) * r
-  }
-
-  return ret
-}
-
 var createInterpolator = function(nodeGenerator) {
   return function(r) {
     var floorOfR = Math.floor(r)
@@ -49,13 +30,13 @@ var createInterpolator = function(nodeGenerator) {
 }
 
 var createNodeGenerator = function(seed) {
-  var rand = seedRand(seed)
+  var randOffset = rand(seed)
   var cacheMap = []
   return function(r) {
     var node = cacheMap[r]
 
     if (!node) {
-      node = [seedRand(r + rand), seedRand(r + rand + 0.333), seedRand(r + rand + 0.667)]
+      node = [0, 0.333, 0.667].map(function(x) { return rand(r + randOffset + x) })
       cacheMap[r] = node
     }
 
@@ -64,7 +45,7 @@ var createNodeGenerator = function(seed) {
 }
 
 var createRandomInterpolator = function(seed) {
-  var offset = seedRand(seedRand(seed))
+  var offset = rand(rand(seed))
   var baseInterpolator = createInterpolator(createNodeGenerator(seed))
 
   return function(r) {
