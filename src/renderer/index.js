@@ -1,6 +1,7 @@
 'use strict'
 
 var colorScheme = require('./colorScheme')
+var coreMandelFunction = require('./coreMandelFunction')
 
 module.exports = function Renderer(canvas) {
   var self = this
@@ -118,29 +119,10 @@ module.exports = function Renderer(canvas) {
   }
 
   self.calculatePoint = function(p) {
-    var a = p.x
-    var b = p.y
-    var iter = 0
-    var radius = 0
-    var lastRadius = 0
+    var ret = coreMandelFunction(p.x, p.y, self.depth)
+    self.iterCount += Math.floor(ret[0])
 
-    while (iter < self.depth && (radius = a * a + b * b) < 4) {
-      lastRadius = radius
-      var a2 = a
-      var b2 = b
-      a = a2 * a2 - b2 * b2 + p.x
-      b = 2 * a2 * b2 + p.y
-
-      iter++
-    }
-
-    self.iterCount += iter
-
-    if (iter === self.depth && a * a + b * b < 4) {
-      iter++
-    }
-
-    return iter + (4 - lastRadius) / (radius - lastRadius)
+    return ret[0] + ret[1]
   }
 
   self.colorise = function(pointValue) {

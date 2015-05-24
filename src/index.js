@@ -1,6 +1,6 @@
 'use strict'
 
-var Renderer = require('./renderer')
+var Renderer = require('./renderer/index')
 
 window.addEventListener('load', function() {
   var canvas = document.createElement('canvas')
