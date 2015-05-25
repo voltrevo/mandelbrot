@@ -2,6 +2,11 @@
 
 var colorScheme = require('./colorScheme')
 var coreMandelFunction = require('./coreMandelFunction')
+var createLinearApproximator = require('./createLinearApproximator')
+
+var postLogScaling = createLinearApproximator(function(x) {
+  return 0.5 * Math.pow(x, 1.3)
+}, 0, 25, 101)
 
 module.exports = function Renderer(canvas) {
   var self = this
@@ -127,7 +132,8 @@ module.exports = function Renderer(canvas) {
 
   self.colorise = function(pointValue) {
     if (pointValue <= self.depth) {
-      var interpolant = self.colorScheme(Math.log(pointValue + 1))
+      var interpolant = self.colorScheme(postLogScaling(Math.log(1 + pointValue)))
+
       return {
         r: 255 * interpolant[0],
         g: 255 * interpolant[1],
@@ -252,6 +258,7 @@ module.exports = function Renderer(canvas) {
     }
 
     self.width *= factor
+    console.log(self.width)
 
     self.draw(false, pos)
   }
