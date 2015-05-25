@@ -3,6 +3,7 @@
 var colorScheme = require('./colorScheme')
 var coreMandelFunction = require('./coreMandelFunction')
 var createLinearApproximator = require('./createLinearApproximator')
+var Scheduler = require('./scheduler')
 
 var postLogScaling = createLinearApproximator(function(x) {
   return 0.5 * Math.pow(x, 1.3)
@@ -30,6 +31,8 @@ module.exports = function Renderer(canvas) {
   self.firstBlockPos = {x: 0, y: 0}
   self.blockTableWidth = 1
   self.blockTableHeight = 0
+
+  self.scheduler = new Scheduler(50)
 
   self.updateSize = function() {
     canvas.width = canvas.parentNode.clientWidth
@@ -91,15 +94,19 @@ module.exports = function Renderer(canvas) {
     })
   })()
 
-  self.calculateBlock = function(p) {
+  self.calculateBlock = self.scheduler(function(opt) {
+    if (opt.drawIndex !== self.drawIndex) {
+      return null
+    }
+
     var result = []
     var counter = 0
 
     for (var i = 0; i !== self.blockSize; i++) {
       for (var j = 0; j !== self.blockSize; j++) {
         result[counter] = self.calculatePoint({
-          x: p.x + j * self.blockPixelSize,
-          y: p.y - i * self.blockPixelSize
+          x: opt.p.x + j * self.blockPixelSize,
+          y: opt.p.y - i * self.blockPixelSize
         })
 
         counter++
@@ -107,7 +114,7 @@ module.exports = function Renderer(canvas) {
     }
 
     return result
-  }
+  })
 
   self.blockToPixelData = function(block, pix) {
     var limit = self.blockSize * self.blockSize
@@ -193,60 +200,44 @@ module.exports = function Renderer(canvas) {
       return dx * dx + aspectRatio * dy * dy
     }
 
-    indexMap.sort(function(a, b) { return indexToDist(a) - indexToDist(b) })
+    indexMap.sort(
+      function(a, b) { return indexToDist(a) - indexToDist(b) }
+    ).forEach(function(index, ii) {
+      var i = Math.floor(index / self.blockTableWidth)
+      var j = index % self.blockTableWidth
 
-    self.drawBlocks({
-      drawIndex: self.drawIndex,
-      blockIndex: 0,
-      indexMap: indexMap,
-      cached: cached
-    })
-  }
+      var drawBlock = function() {
+        var block = self.blocks[index]
+        var pix = self.ctx.createImageData(self.blockSize, self.blockSize)
+        self.blockToPixelData(block, pix)
+        self.ctx.putImageData(
+          pix, self.firstBlockPos.x + j * self.blockSize,
+          self.firstBlockPos.y + i * self.blockSize
+        )
+      }
 
-  self.drawBlocks = function(drawState) {
-    if (drawState.drawIndex !== self.drawIndex) {
-      return
-    }
+      if (!cached) {
+        self.calculateBlock({
+          p: {
+            x: self.firstBlockPos.x + j * self.blockSize * self.blockPixelSize,
+            y: self.firstBlockPos.y - i * self.blockSize * self.blockPixelSize
+          },
+          drawIndex: self.drawIndex
+        }).then(function(block) {
+          if (block) {
+            self.blocks[index] = block
+            drawBlock()
 
-    var iterTarget = Math.ceil((self.iterCount + 1) / self.itersPerDraw) * self.itersPerDraw
-
-    while (self.iterCount < iterTarget) {
-      var pix = self.ctx.createImageData(self.blockSize, self.blockSize)
-
-      var mappedIndex = drawState.indexMap[drawState.blockIndex]
-      var i = Math.floor(mappedIndex / self.blockTableWidth)
-      var j = mappedIndex % self.blockTableWidth
-
-      if (!drawState.cached) {
-        self.blocks[mappedIndex] = self.calculateBlock({
-          x: self.firstBlockPos.x + j * self.blockSize * self.blockPixelSize,
-          y: self.firstBlockPos.y - i * self.blockSize * self.blockPixelSize
+            if (ii === self.blockTableWidth * self.blockTableHeight - 1) {
+              self.debugEnd = Date.now()
+              console.log(self.debugEnd - self.debugStart)
+            }
+          }
         })
+      } else {
+        drawBlock()
       }
-
-      self.blockToPixelData(self.blocks[mappedIndex], pix)
-
-      self.ctx.putImageData(
-        pix, self.firstBlockPos.x + j * self.blockSize,
-        self.firstBlockPos.y + i * self.blockSize
-      )
-
-      drawState.blockIndex++
-
-      if (drawState.blockIndex === drawState.indexMap.length) {
-        self.debugStop = new Date()
-        console.log(self.debugStop - self.debugStart)
-        return
-      }
-    }
-
-    if (drawState.cached) {
-      self.drawBlocks(drawState)
-    } else {
-      setTimeout(function() {
-        self.drawBlocks(drawState)
-      }, 0)
-    }
+    })
   }
 
   self.scale = function(factor, pos) {
