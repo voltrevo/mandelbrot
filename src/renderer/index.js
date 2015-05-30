@@ -3,6 +3,7 @@
 var calculator = require('./calculator')
 var colorScheme = require('./colorScheme')
 var createLinearApproximator = require('./createLinearApproximator')
+var deferAndDropExcess = require('./deferAndDropExcess')
 
 var postLogScaling = createLinearApproximator(function(x) {
   return 0.5 * Math.pow(x, 1.3)
@@ -35,7 +36,7 @@ module.exports = function Renderer(canvas) {
 
     self.updateSize()
 
-    canvas.parentNode.addEventListener('keydown', function(evt) {
+    canvas.parentNode.addEventListener('keydown', deferAndDropExcess(function(evt) {
       var start
       var end
 
@@ -64,7 +65,7 @@ module.exports = function Renderer(canvas) {
         end = Date.now()
         console.log(end - start)
       }
-    })
+    }))
 
     canvas.addEventListener('mousedown', function(e) {
       lastMousedown.x = e.clientX
