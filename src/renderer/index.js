@@ -119,13 +119,27 @@ module.exports = function Renderer(canvas) {
     }
   }
 
-  self.colorise = function(pointValue) {
-    if (pointValue < self.depth) {
-      var interpolant = self.colorScheme(
-        self.coloringMultiplier *
-        postLogScaling(Math.log(1 + pointValue)) +
-        self.coloringOffset
+  self.applyColorScalingToBlock = function(block) {
+    var scaledBlock = {
+      size: block.size,
+      pos: block.pos,
+      data: []
+    }
+
+    for (var i = 0; i !== block.data.length; i++) {
+      var pointValue = block.data[i]
+
+      scaledBlock.data.push(
+        pointValue === block.depth ? -1 : postLogScaling(Math.log(1 + pointValue))
       )
+    }
+
+    return scaledBlock
+  }
+
+  self.colorise = function(pointValue) {
+    if (pointValue !== -1) {
+      var interpolant = self.colorScheme(self.coloringMultiplier * pointValue + self.coloringOffset)
 
       return {
         r: 255 * interpolant[0],
@@ -174,11 +188,14 @@ module.exports = function Renderer(canvas) {
         self.depth
       ).map(function(blockPromise) {
         return blockPromise.then(function(block) {
-          if (block) {
-            self.drawBlock(block)
+          if (!block) {
+            return null
           }
 
-          return block
+          var colorReadyBlock = self.applyColorScalingToBlock(block)
+          self.drawBlock(colorReadyBlock)
+
+          return colorReadyBlock
         })
       })
     ).then(function(blocks) {
