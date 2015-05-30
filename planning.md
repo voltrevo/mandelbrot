@@ -1,0 +1,42 @@
+Features Ideas
+--------------
+
+- Cache scaled divergence values for faster re-colouring
+- Save image
+- Subtle info button to launch ui / also 'h' and 'F1' hotkeys
+- Generate link to current state (possibly maintain)
+- Use all physical pixels on devices with devicePixelRatio > 1 (e.g. retina displays)
+- Colour scheme editor
+    - Click to set reference value
+    - Use colour picker to change colour of key values
+    - Insert/delete key values
+    - Scale contraction/expansion around reference value
+    - Hue rotation
+    - Set colour palette/guide for randomly generated schemes
+    - Allow generating blank schemes for editing
+- Block caching
+    - Specialized caching for black-only blocks, including hard-coded ones for rendering the start-up screen
+    - Translation (moving without zoom) uses existing blocks and only re-calculates new areas
+    - Background speculative calculation
+    - When increasing depth, only recalculate black points
+- Optional connection to C++ calculation module requiring installer
+- Arbitrary precision support
+- Support for alternative algorithms to z -> z^2 + c
+    - z -> z^n + c (takes parameter n)
+    - Jump to/from julia set
+    - Arbitrary slices of 4D mandel-julia space
+    - Convergence behaviour of Newton's method in complex space
+- Web workers
+- Slave tabs
+- Shared sessions with P2P webrtc networking
+- Rotation
+- Use canvas transforms to animate drag/zoom
+- Calculate new blocks during drag
+- Colouring options for points inside mandelbrot set
+- Possible improvements to technique for assigning sub-iteration values
+- Generate larger or specific resolution/aspect ratio images
+- Automated facebook/etc sharing options
+- Start with lower resolution when recalculating
+- Changes to make usable on mobile, e.g. multi-touch zoom/translation/rotation
+- Speed up calculation with vector processing via float64 arrays
+- Calculation via WebGL
