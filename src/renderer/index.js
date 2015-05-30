@@ -25,6 +25,7 @@ module.exports = function Renderer(canvas) {
 
   self.calculator = calculator()
   self.currBlocks = null
+  self.centralPixelPos = null
 
   self.updateSize = function() {
     canvas.width = canvas.parentNode.clientWidth
@@ -134,6 +135,11 @@ module.exports = function Renderer(canvas) {
       )
     }
 
+    scaledBlock.pixelPos = {
+      x: self.centralPixelPos.x + block.size * block.j,
+      y: self.centralPixelPos.y + block.size * block.i
+    }
+
     return scaledBlock
   }
 
@@ -179,6 +185,8 @@ module.exports = function Renderer(canvas) {
 
     var begin = Date.now()
 
+    self.centralPixelPos = null
+
     Promise.all(
       self.calculator.getBlocksForScreen(
         pos,
@@ -190,6 +198,10 @@ module.exports = function Renderer(canvas) {
         return blockPromise.then(function(block) {
           if (!block) {
             return null
+          }
+
+          if (!self.centralPixelPos) {
+            self.centralPixelPos = self.calculateCentralPixelPos(block)
           }
 
           var colorReadyBlock = self.applyColorScalingToBlock(block)
@@ -204,6 +216,27 @@ module.exports = function Renderer(canvas) {
 
       self.currBlocks = blocks
     })
+  }
+
+  self.calculateCentralPixelPos = function(sampleBlock) {
+    // TODO: This is awful
+    var aspectRatio = self.canvas.clientWidth / self.canvas.clientHeight
+    var pixelWidth = self.width / self.canvas.clientWidth
+
+    var canvasTopLeft = {
+      x: self.center.x - 0.5 * self.width,
+      y: self.center.y - 0.5 * self.width / aspectRatio
+    }
+
+    var pixelPos = {
+      x: (sampleBlock.pos.x - canvasTopLeft.x) / pixelWidth,
+      y: (sampleBlock.pos.y - canvasTopLeft.y) / pixelWidth
+    }
+
+    return {
+      x: Math.round(pixelPos.x - sampleBlock.size * sampleBlock.j),
+      y: Math.round(pixelPos.y - sampleBlock.size * sampleBlock.i)
+    }
   }
 
   self.drawBlock = function(block) {
@@ -226,8 +259,8 @@ module.exports = function Renderer(canvas) {
 
     self.ctx.putImageData(
       pix,
-      pixelPos.x,
-      pixelPos.y
+      block.pixelPos.x,
+      block.pixelPos.y
     )
   }
 
@@ -253,7 +286,6 @@ module.exports = function Renderer(canvas) {
     }
 
     self.width *= factor
-    console.log(self.width)
 
     self.draw(pos)
   }
