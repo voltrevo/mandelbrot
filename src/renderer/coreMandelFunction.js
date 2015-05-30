@@ -22,5 +22,5 @@ module.exports = function(re, im, depth) {
     iter++
   }
 
-  return [iter, (4 - lastRadius) / (radius - lastRadius)]
+  return iter + (4 - lastRadius) / (radius - lastRadius)
 }

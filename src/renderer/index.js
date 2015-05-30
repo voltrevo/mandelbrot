@@ -19,10 +19,11 @@ module.exports = function Renderer(canvas) {
   self.width = 4
 
   self.iterCount = 0
-  self.itersPerDraw = 7 * 1000 * 1000
   self.drawIndex = 0
 
   self.colorScheme = colorScheme.createRandom(colorScheme.magicValue)
+  self.coloringMultiplier = 1
+  self.coloringOffset = 0
 
   // TODO: separate class
   self.blockSize = 64
@@ -46,17 +47,32 @@ module.exports = function Renderer(canvas) {
     self.updateSize()
 
     canvas.parentNode.addEventListener('keydown', function(evt) {
-      if (evt.keyCode === 67) {
-        var start = new Date()
+      var start
+      var end
 
+      if (evt.keyCode === 67) {
         colorSchemeSeedOffset += (!evt.shiftKey ? 1 : -1)
 
         self.colorScheme = colorScheme.createRandom(
           colorScheme.magicValue + colorSchemeSeedOffset
         )
 
+        start = new Date()
         self.draw(true)
-        var end = new Date()
+        end = new Date()
+        console.log(end - start)
+      }
+
+      if (evt.keyCode === 187 || evt.keyCode === 189) {
+        if (evt.shiftKey) {
+          self.coloringOffset += 0.05 * (188 - evt.keyCode)
+        } else {
+          self.coloringMultiplier *= Math.exp(0.05 * (188 - evt.keyCode))
+        }
+
+        start = new Date()
+        self.draw(true)
+        end = new Date()
         console.log(end - start)
       }
     })
@@ -131,15 +147,16 @@ module.exports = function Renderer(canvas) {
   }
 
   self.calculatePoint = function(p) {
-    var ret = coreMandelFunction(p.x, p.y, self.depth)
-    self.iterCount += Math.floor(ret[0])
-
-    return ret[0] + ret[1]
+    return coreMandelFunction(p.x, p.y, self.depth)
   }
 
   self.colorise = function(pointValue) {
     if (pointValue <= self.depth) {
-      var interpolant = self.colorScheme(postLogScaling(Math.log(1 + pointValue)))
+      var interpolant = self.colorScheme(
+        self.coloringMultiplier *
+        postLogScaling(Math.log(1 + pointValue)) +
+        self.coloringOffset
+      )
 
       return {
         r: 255 * interpolant[0],
