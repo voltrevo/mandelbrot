@@ -8,7 +8,7 @@ module.exports = function(re, im, depth) {
   var radius = 0
   var lastRadius = 0
 
-  while (iter < depth && (radius = a * a + b * b) < 4) {
+  while ((radius = a * a + b * b) < 4 && iter < depth) {
     lastRadius = radius
     var a2 = a
     var b2 = b
@@ -18,8 +18,8 @@ module.exports = function(re, im, depth) {
     iter++
   }
 
-  if (iter === depth && a * a + b * b < 4) {
-    iter++
+  if (iter === depth) {
+    return iter
   }
 
   return iter + (4 - lastRadius) / (radius - lastRadius)
