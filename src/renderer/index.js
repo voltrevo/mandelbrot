@@ -23,6 +23,7 @@ module.exports = function Renderer(canvas) {
   self.coloringOffset = 0
 
   self.calculator = calculator()
+  self.currBlocks = null
 
   self.updateSize = function() {
     canvas.width = canvas.parentNode.clientWidth
@@ -39,24 +40,28 @@ module.exports = function Renderer(canvas) {
       var end
 
       if (evt.keyCode === 67) {
+        start = Date.now()
         self.colorSchemeSeedOffset += (!evt.shiftKey ? 1 : -1)
+        
+        self.colorScheme = colorScheme.createRandom(
+          colorScheme.magicValue + self.colorSchemeSeedOffset
+        )
 
-        start = new Date()
-        self.draw()
-        end = new Date()
+        self.drawBlocksCached()
+        end = Date.now()
         console.log(end - start)
       }
 
       if (evt.keyCode === 187 || evt.keyCode === 189) {
+        start = Date.now()
         if (evt.shiftKey) {
           self.coloringOffset += 0.05 * (188 - evt.keyCode)
         } else {
           self.coloringMultiplier *= Math.exp(0.05 * (188 - evt.keyCode))
         }
 
-        start = new Date()
-        self.draw()
-        end = new Date()
+        self.drawBlocksCached()
+        end = Date.now()
         console.log(end - start)
       }
     })
@@ -137,12 +142,8 @@ module.exports = function Renderer(canvas) {
     }
   }
 
-  self.debugStart = null
-  self.debugStop = null
-
   self.draw = function(pos) { // pos === referencePoint?
     pos = pos || self.center
-    self.debugStart = new Date()
 
     self.colorScheme = colorScheme.createRandom(
       colorScheme.magicValue + self.colorSchemeSeedOffset
@@ -161,26 +162,29 @@ module.exports = function Renderer(canvas) {
       y: topLeft.y + self.width / aspectRatio
     }
 
-    var blocks = self.calculator.getBlocksForScreen(
-      pos,
-      topLeft,
-      bottomRight,
-      pixelWidth,
-      self.depth
-    )
-
     var begin = Date.now()
-    Promise.all(blocks).then(function() {
+
+    Promise.all(
+      self.calculator.getBlocksForScreen(
+        pos,
+        topLeft,
+        bottomRight,
+        pixelWidth,
+        self.depth
+      ).map(function(blockPromise) {
+        return blockPromise.then(function(block) {
+          if (block) {
+            self.drawBlock(block)
+          }
+
+          return block
+        })
+      })
+    ).then(function(blocks) {
       var end = Date.now()
       console.log(end - begin)
-    })
 
-    blocks.forEach(function(blockPromise) {
-      blockPromise.then(function(block) {
-        if (block) {
-          self.drawBlock(block)
-        }
-      })
+      self.currBlocks = blocks
     })
   }
 
@@ -207,6 +211,19 @@ module.exports = function Renderer(canvas) {
       pixelPos.x,
       pixelPos.y
     )
+  }
+
+  self.drawBlocksCached = function() {
+    if (!self.currBlocks) {
+      self.draw()
+      return
+    }
+
+    self.currBlocks.forEach(function(block) {
+      if (block) {
+        self.drawBlock(block)
+      }
+    })
   }
 
   self.scale = function(factor, pos) {

@@ -85,13 +85,6 @@ module.exports = function() {
             }
         }
 
-        console.log(JSON.stringify({
-            topLeft: topLeft,
-            bottomRight: bottomRight,
-            selfCenter: self.center,
-            coordBounds: coordBounds
-        }))
-
         var blocksToCalculate = []
 
         var screenWidth = bottomRight.x - topLeft.x
@@ -154,21 +147,30 @@ module.exports = function() {
         })
     }
 
-    self.calculateBlock = function(block) {
-        var pos = self.coordToPos({
-            i: block.i,
-            j: block.j
-        })
+    self.calculateRawBlock = function(pos, depth) {
+        var result = []
 
         for (var i = 0; i !== self.blockSideLength; i++) {
             for (var j = 0; j !== self.blockSideLength; j++) {
-                block.data.push(coreMandelFunction(
+                result.push(coreMandelFunction(
                     pos.x + j * self.pixelSize,
                     pos.y + i * self.pixelSize,
-                    block.depth
+                    depth
                 ))
             }
         }
+
+        return result
+    }
+
+    self.calculateBlock = function(block) {
+        block.data = self.calculateRawBlock(
+            self.coordToPos({
+                i: block.i,
+                j: block.j
+            }),
+            block.depth
+        )
 
         return block
     }
