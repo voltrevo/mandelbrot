@@ -2,6 +2,7 @@
 
 var lerp = require('./lerp')
 var rand = require('./rand')
+var doubleEndedArray = require('./doubleEndedArray')
 
 var createInterpolator = function(nodeGenerator) {
   return function(r) {
@@ -17,11 +18,11 @@ var createNodeGenerator = function(seed) {
   var randOffset = rand(seed)
   var cacheMap = []
   return function(r) {
-    var node = cacheMap[r]
+    var node = cacheMap[r + 1000000]
 
     if (!node) {
       node = [0, 0.333, 0.667].map(function(x) { return rand(r + randOffset + x) })
-      cacheMap[r] = node
+      cacheMap[r + 1000000] = node
     }
 
     return node

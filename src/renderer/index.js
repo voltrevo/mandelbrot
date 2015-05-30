@@ -18,10 +18,10 @@ module.exports = function Renderer(canvas) {
   self.centre = {x: -0.75, y: 0}
   self.width = 4
 
-  self.iterCount = 0
   self.drawIndex = 0
 
   self.colorScheme = colorScheme.createRandom(colorScheme.magicValue)
+  self.colorSchemeSeedOffset = 0
   self.coloringMultiplier = 1
   self.coloringOffset = 0
 
@@ -42,7 +42,6 @@ module.exports = function Renderer(canvas) {
 
   ;(function() {
     var lastMousedown = {x: 0, y: 0}
-    var colorSchemeSeedOffset = 0
 
     self.updateSize()
 
@@ -51,11 +50,7 @@ module.exports = function Renderer(canvas) {
       var end
 
       if (evt.keyCode === 67) {
-        colorSchemeSeedOffset += (!evt.shiftKey ? 1 : -1)
-
-        self.colorScheme = colorScheme.createRandom(
-          colorScheme.magicValue + colorSchemeSeedOffset
-        )
+        self.colorSchemeSeedOffset += (!evt.shiftKey ? 1 : -1)
 
         start = new Date()
         self.draw(true)
@@ -182,6 +177,10 @@ module.exports = function Renderer(canvas) {
     self.debugStart = new Date()
     cached = (cached !== undefined ? cached : false)
     self.drawIndex += (!cached ? 1 : 0)
+
+    self.colorScheme = colorScheme.createRandom(
+      colorScheme.magicValue + self.colorSchemeSeedOffset
+    )
 
     var pixelWidth = self.width / parseInt(self.canvas.width)
     var aspectRatio = parseInt(self.canvas.width) / parseInt(self.canvas.height)
