@@ -2,7 +2,6 @@
 
 var lerp = require('./lerp')
 var rand = require('./rand')
-var doubleEndedArray = require('./doubleEndedArray')
 
 var createInterpolator = function(nodeGenerator) {
   return function(r) {
