@@ -112,7 +112,7 @@ module.exports = function Renderer(canvas) {
     })
   })()
 
-  self.draw = function(pos) { // pos === referencePoint?
+  self.draw = deferAndDropExcess(function(pos) { // pos === referencePoint?
     pos = pos || self.center
 
     // self.coloriser.clearCache() // TODO: was this a good idea when it used to work?
@@ -167,7 +167,7 @@ module.exports = function Renderer(canvas) {
 
       self.coloriser.updateReferenceColor(scaledBlocks)
     })
-  }
+  })
 
   self.drawBlock = function(block) {
     var pix = self.ctx.createImageData(block.size, block.size)
