@@ -3,6 +3,8 @@
 var Renderer = require('./renderer/index')
 
 window.addEventListener('load', function() {
+  document.body.style.overflow = 'hidden'
+
   var canvas = document.createElement('canvas')
   document.body.appendChild(canvas)
 
