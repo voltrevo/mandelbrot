@@ -84,8 +84,17 @@ module.exports = function Renderer(canvas) {
       var aspectRatio = canvas.width / canvas.height
 
       var pos = {
-        x: self.center.x - 0.5 * self.width + lastMousedown.x * pixelSize,
-        y: self.center.y - 0.5 / aspectRatio * self.width + pixelSize * lastMousedown.y
+        x: (
+          self.center.x -
+          0.5 * self.width +
+          lastMousedown.x * self.pixelRatio * pixelSize
+        ),
+        y: (
+          self.center.y -
+          0.5 / aspectRatio *
+          self.width +
+          lastMousedown.y * self.pixelRatio * pixelSize
+        )
       }
 
       self.moveCenter({
