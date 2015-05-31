@@ -25,6 +25,7 @@ module.exports = function Renderer(canvas) {
 
   self.calculator = calculator()
   self.currBlocks = null
+  self.currReferenceColor = 0
   self.centralPixelPos = null
 
   self.pixelRatio = window.devicePixelRatio || 1
@@ -64,7 +65,9 @@ module.exports = function Renderer(canvas) {
         if (evt.shiftKey) {
           self.coloringOffset += 0.05 * (188 - evt.keyCode)
         } else {
-          self.coloringMultiplier *= Math.exp(0.05 * (188 - evt.keyCode))
+          var k = Math.exp(0.05 * (188 - evt.keyCode))
+          self.coloringOffset += (1 - k) * self.coloringMultiplier * self.currReferenceColor
+          self.coloringMultiplier *= k
         }
 
         self.drawBlocksCached()
@@ -243,7 +246,32 @@ module.exports = function Renderer(canvas) {
       console.log(end - begin)
 
       self.currBlocks = blocks
+      self.currReferenceColor = self.calculateReferenceColor(blocks)
     })
+  }
+
+  self.calculateReferenceColor = function(blocks) {
+    var sampleVals = []
+    for (var i = 0; i !== blocks.length; i++) {
+      var block = blocks[i]
+
+      if (!block) {
+        continue
+      }
+
+      var val = block.data[0]
+
+      if (val === -1) {
+        continue
+      }
+
+      sampleVals.push(val)
+    }
+
+    sampleVals.sort()
+    var ret = sampleVals[Math.floor(0.9 * sampleVals.length)]
+
+    return ret
   }
 
   self.calculateCentralPixelPos = function(sampleBlock) {
