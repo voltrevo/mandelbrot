@@ -1,13 +1,9 @@
 'use strict'
 
 var calculator = require('./calculator')
-var colorScheme = require('./colorScheme')
-var createLinearApproximator = require('./createLinearApproximator')
+var coloriser = require('./coloriser')
 var deferAndDropExcess = require('./deferAndDropExcess')
-
-var postLogScaling = createLinearApproximator(function(x) {
-  return 0.5 * Math.pow(x, 1.3)
-}, 0, 25, 101)
+var displayBlockStore = require('./displayBlockStore')
 
 module.exports = function Renderer(canvas) {
   var self = this
@@ -18,15 +14,10 @@ module.exports = function Renderer(canvas) {
   self.center = {x: -0.75, y: 0}
   self.width = 4
 
-  self.colorScheme = colorScheme.createRandom(colorScheme.magicValue)
-  self.colorSchemeSeedOffset = 0
-  self.coloringMultiplier = 1
-  self.coloringOffset = 0
+  self.coloriser = new coloriser()
 
   self.calculator = calculator()
-  self.currBlocks = null
-  self.currReferenceColor = 0
-  self.centralPixelPos = null
+  self.displayBlockStore = null
 
   self.pixelRatio = window.devicePixelRatio || 1
 
@@ -44,35 +35,19 @@ module.exports = function Renderer(canvas) {
     self.updateSize()
 
     canvas.parentNode.addEventListener('keydown', deferAndDropExcess(function(evt) {
-      var start
-      var end
-
       if (evt.keyCode === 67) {
-        start = Date.now()
-        self.colorSchemeSeedOffset += (!evt.shiftKey ? 1 : -1)
-        
-        self.colorScheme = colorScheme.createRandom(
-          colorScheme.magicValue + self.colorSchemeSeedOffset
-        )
-
-        self.drawBlocksCached()
-        end = Date.now()
-        console.log(end - start)
+        self.coloriser.randomise(!evt.shiftKey ? 1 : -1)
+        self.drawBlocksCached() // TODO: rename to redrawCurrentBlocks?
       }
 
       if (evt.keyCode === 187 || evt.keyCode === 189) {
-        start = Date.now()
         if (evt.shiftKey) {
-          self.coloringOffset += 0.05 * (188 - evt.keyCode)
+          self.coloriser.shift(0.05 * (188 - evt.keyCode))
         } else {
-          var k = Math.exp(0.05 * (188 - evt.keyCode))
-          self.coloringOffset += (1 - k) * self.coloringMultiplier * self.currReferenceColor
-          self.coloringMultiplier *= k
+          self.coloriser.multiplySpeed(Math.exp(0.05 * (188 - evt.keyCode)))
         }
 
         self.drawBlocksCached()
-        end = Date.now()
-        console.log(end - start)
       }
     }))
 
@@ -137,69 +112,10 @@ module.exports = function Renderer(canvas) {
     })
   })()
 
-  self.blockDataToPixelData = function(blockData, pix) {
-    var limit = blockData.length
-
-    var inc = 0
-
-    for (var i = 0; i < limit; i++) {
-      var c = self.colorise(blockData[i])
-      pix.data[inc++] = c.r
-      pix.data[inc++] = c.g
-      pix.data[inc++] = c.b
-      pix.data[inc++] = c.a
-    }
-  }
-
-  self.applyColorScalingToBlock = function(block) {
-    var scaledBlock = {
-      size: block.size,
-      pos: block.pos,
-      data: []
-    }
-
-    for (var i = 0; i !== block.data.length; i++) {
-      var pointValue = block.data[i]
-
-      scaledBlock.data.push(
-        pointValue === block.depth ? -1 : postLogScaling(Math.log(1 + pointValue))
-      )
-    }
-
-    scaledBlock.pixelPos = {
-      x: self.centralPixelPos.x + block.size * block.j,
-      y: self.centralPixelPos.y + block.size * block.i
-    }
-
-    return scaledBlock
-  }
-
-  self.colorise = function(pointValue) {
-    if (pointValue !== -1) {
-      var interpolant = self.colorScheme(self.coloringMultiplier * pointValue + self.coloringOffset)
-
-      return {
-        r: 255 * interpolant[0],
-        g: 255 * interpolant[1],
-        b: 255 * interpolant[2],
-        a: 255
-      }
-    }
-
-    return {
-      r: 0,
-      g: 0,
-      b: 0,
-      a: 255
-    }
-  }
-
   self.draw = function(pos) { // pos === referencePoint?
     pos = pos || self.center
 
-    self.colorScheme = colorScheme.createRandom(
-      colorScheme.magicValue + self.colorSchemeSeedOffset
-    )
+    // self.coloriser.clearCache() // TODO: was this a good idea when it used to work?
 
     var pixelWidth = self.width / canvas.width
     var aspectRatio = canvas.width / canvas.height
@@ -216,7 +132,13 @@ module.exports = function Renderer(canvas) {
 
     var begin = Date.now()
 
-    self.centralPixelPos = null
+    self.displayBlockStore = new displayBlockStore(
+      self.center,
+      self.canvas.width,
+      self.canvas.height,
+      self.width,
+      self.width / self.canvas.width * self.canvas.height
+    )
 
     Promise.all(
       self.calculator.getBlocksForScreen(
@@ -231,73 +153,27 @@ module.exports = function Renderer(canvas) {
             return null
           }
 
-          if (!self.centralPixelPos) {
-            self.centralPixelPos = self.calculateCentralPixelPos(block)
-          }
+          var scaledBlock = self.displayBlockStore.scaleBlock(block)
+          self.displayBlockStore.add(scaledBlock)
 
-          var colorReadyBlock = self.applyColorScalingToBlock(block)
-          self.drawBlock(colorReadyBlock)
+          self.drawBlock(scaledBlock)
 
-          return colorReadyBlock
+          return scaledBlock
         })
       })
-    ).then(function(blocks) {
+    ).then(function(scaledBlocks) {
       var end = Date.now()
       console.log(end - begin)
 
-      self.currBlocks = blocks
-      self.currReferenceColor = self.calculateReferenceColor(blocks)
+      self.coloriser.updateReferenceColor(scaledBlocks)
     })
-  }
-
-  self.calculateReferenceColor = function(blocks) {
-    var sampleVals = []
-    for (var i = 0; i !== blocks.length; i++) {
-      var block = blocks[i]
-
-      if (!block) {
-        continue
-      }
-
-      var val = block.data[0]
-
-      if (val === -1) {
-        continue
-      }
-
-      sampleVals.push(val)
-    }
-
-    sampleVals.sort()
-    var ret = sampleVals[Math.floor(0.9 * sampleVals.length)]
-
-    return ret
-  }
-
-  self.calculateCentralPixelPos = function(sampleBlock) {
-    // TODO: This is awful
-    var aspectRatio = self.canvas.width / self.canvas.height
-    var pixelWidth = self.width / self.canvas.width
-
-    var canvasTopLeft = {
-      x: self.center.x - 0.5 * self.width,
-      y: self.center.y - 0.5 * self.width / aspectRatio
-    }
-
-    var pixelPos = {
-      x: (sampleBlock.pos.x - canvasTopLeft.x) / pixelWidth,
-      y: (sampleBlock.pos.y - canvasTopLeft.y) / pixelWidth
-    }
-
-    return {
-      x: Math.round(pixelPos.x - sampleBlock.size * sampleBlock.j),
-      y: Math.round(pixelPos.y - sampleBlock.size * sampleBlock.i)
-    }
   }
 
   self.drawBlock = function(block) {
     var pix = self.ctx.createImageData(block.size, block.size)
-    self.blockDataToPixelData(block.data, pix)
+    
+    // TODO: this belongs in the coloriser
+    self.coloriser.blockDataToPixelData(block.data, pix)
 
     self.ctx.putImageData(
       pix,
@@ -307,16 +183,12 @@ module.exports = function Renderer(canvas) {
   }
 
   self.drawBlocksCached = function() {
-    if (!self.currBlocks) {
+    if (!self.displayBlockStore) {
       self.draw()
       return
     }
 
-    self.currBlocks.forEach(function(block) {
-      if (block) {
-        self.drawBlock(block)
-      }
-    })
+    self.displayBlockStore.blocks.forEach(self.drawBlock)
   }
 
   self.scale = function(factor, pos) {
