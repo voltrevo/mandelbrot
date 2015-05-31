@@ -27,9 +27,14 @@ module.exports = function Renderer(canvas) {
   self.currBlocks = null
   self.centralPixelPos = null
 
+  self.pixelRatio = window.devicePixelRatio || 1
+
   self.updateSize = function() {
-    canvas.width = canvas.parentNode.clientWidth
-    canvas.height = canvas.parentNode.clientHeight
+    canvas.style.width = canvas.parentNode.clientWidth + 'px'
+    canvas.style.height = canvas.parentNode.clientHeight + 'px'
+
+    canvas.width = self.pixelRatio * canvas.parentNode.clientWidth
+    canvas.height = self.pixelRatio * canvas.parentNode.clientHeight
   }
 
   ;(function() {
@@ -75,25 +80,39 @@ module.exports = function Renderer(canvas) {
 
     canvas.addEventListener('mouseup', function(e) {
       var diff = {x: e.clientX - lastMousedown.x, y: e.clientY - lastMousedown.y}
-      var pixelSize = self.width / parseInt(window.innerWidth)
-      var aspectRatio = parseInt(canvas.clientWidth) / parseInt(canvas.clientHeight)
+      var pixelSize = self.width / canvas.width
+      var aspectRatio = canvas.width / canvas.height
+
       var pos = {
         x: self.center.x - 0.5 * self.width + lastMousedown.x * pixelSize,
         y: self.center.y - 0.5 / aspectRatio * self.width + pixelSize * lastMousedown.y
       }
-      self.moveCenter({x: -diff.x * pixelSize, y: -diff.y * pixelSize})
+
+      self.moveCenter({
+        x: -diff.x * pixelSize * self.pixelRatio,
+        y: -diff.y * pixelSize * self.pixelRatio
+      })
+
       self.draw(pos)
     })
 
     canvas.addEventListener('wheel', function(e) {
-      var pixelSize = self.width / parseInt(window.innerWidth)
-      var aspectRatio = parseInt(canvas.clientWidth) / parseInt(canvas.clientHeight)
+      var pixelSize = self.width / canvas.width
+      var aspectRatio = canvas.width / canvas.height
 
       self.scale(
         e.deltaY < 0 ? 2/3 : 3/2,
         {
-          x: self.center.x - 0.5 * self.width + e.clientX * pixelSize,
-          y: self.center.y - 0.5 / aspectRatio * self.width + pixelSize * e.clientY
+          x: (
+            self.center.x -
+            0.5 * self.width +
+            e.clientX * self.pixelRatio * pixelSize
+          ),
+          y: (
+            self.center.y -
+            0.5 / aspectRatio * self.width +
+            self.pixelRatio * pixelSize * e.clientY
+          )
         }
       )
     })
@@ -170,8 +189,8 @@ module.exports = function Renderer(canvas) {
       colorScheme.magicValue + self.colorSchemeSeedOffset
     )
 
-    var pixelWidth = self.width / parseInt(self.canvas.clientWidth)
-    var aspectRatio = parseInt(self.canvas.width) / parseInt(self.canvas.height)
+    var pixelWidth = self.width / canvas.width
+    var aspectRatio = canvas.width / canvas.height
 
     var topLeft = {
       x: self.center.x - 0.5 * self.width,
@@ -220,8 +239,8 @@ module.exports = function Renderer(canvas) {
 
   self.calculateCentralPixelPos = function(sampleBlock) {
     // TODO: This is awful
-    var aspectRatio = self.canvas.clientWidth / self.canvas.clientHeight
-    var pixelWidth = self.width / self.canvas.clientWidth
+    var aspectRatio = self.canvas.width / self.canvas.height
+    var pixelWidth = self.width / self.canvas.width
 
     var canvasTopLeft = {
       x: self.center.x - 0.5 * self.width,
@@ -242,20 +261,6 @@ module.exports = function Renderer(canvas) {
   self.drawBlock = function(block) {
     var pix = self.ctx.createImageData(block.size, block.size)
     self.blockDataToPixelData(block.data, pix)
-
-    // TODO: This is awful
-    var aspectRatio = self.canvas.clientWidth / self.canvas.clientHeight
-    var pixelWidth = self.width / self.canvas.clientWidth
-
-    var canvasTopLeft = {
-      x: self.center.x - 0.5 * self.width,
-      y: self.center.y - 0.5 * self.width / aspectRatio
-    }
-
-    var pixelPos = {
-      x: (block.pos.x - canvasTopLeft.x) / pixelWidth,
-      y: (block.pos.y - canvasTopLeft.y) / pixelWidth
-    }
 
     self.ctx.putImageData(
       pix,
