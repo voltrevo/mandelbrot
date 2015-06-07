@@ -2,9 +2,10 @@
 
 var Renderer = require('./renderer/index')
 
+require('./style.css')
+
 window.addEventListener('load', function() {
-  document.body.style.overflow = 'hidden'
-  document.body.style.backgroundColor = '#888'
+  document.title = 'js mandelbrot'
 
   var canvas = document.createElement('canvas')
   document.body.appendChild(canvas)
