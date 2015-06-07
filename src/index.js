@@ -4,6 +4,7 @@ var Renderer = require('./renderer/index')
 
 window.addEventListener('load', function() {
   document.body.style.overflow = 'hidden'
+  document.body.style.backgroundColor = '#888'
 
   var canvas = document.createElement('canvas')
   document.body.appendChild(canvas)

@@ -17,7 +17,7 @@ module.exports = function() {
 
     self.blockSideLength = 64
 
-    self.scheduler = scheduler(50)
+    self.scheduler = scheduler(30)
 
     self.calculateCoordBounds = function(topLeft, bottomRight) {
         var blockSize = self.blockSideLength * self.pixelSize

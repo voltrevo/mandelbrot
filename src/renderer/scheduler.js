@@ -6,6 +6,10 @@ module.exports = function Scheduler(batchTimerThreshold) {
   _.queue = []
   _.calculationScheduled = false
 
+  _.clear = function() {
+    _.queue = []
+  }
+
   _.scheduleCalculation = function() {
     if (_.calculationScheduled) {
       return
@@ -49,6 +53,8 @@ module.exports = function Scheduler(batchTimerThreshold) {
       return ret
     }
   }
+  
+  wrapper.clear = _.clear
 
   wrapper._ = _
 

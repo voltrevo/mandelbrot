@@ -6,7 +6,13 @@ var postLogScaling = createLinearApproximator(function(x) {
   return 0.5 * Math.pow(x, 1.3)
 }, 0, 25, 101)
 
-module.exports = function(mandelCenter, pixelWidth, pixelHeight, mandelWidth, mandelHeight) {
+module.exports = function(
+  mandelCenter,
+  pixelWidth,
+  pixelHeight,
+  mandelWidth,
+  mandelHeight
+) {
   var self = {}
 
   self.empty = true

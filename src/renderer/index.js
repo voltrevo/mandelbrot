@@ -4,6 +4,7 @@ var calculator = require('./calculator')
 var coloriser = require('./coloriser')
 var deferAndDropExcess = require('./deferAndDropExcess')
 var displayBlockStore = require('./displayBlockStore')
+var scheduler = require('./scheduler')
 
 module.exports = function Renderer(canvas) {
   var self = this
@@ -12,7 +13,7 @@ module.exports = function Renderer(canvas) {
   self.canvas = canvas
   self.ctx = canvas.getContext('2d')
   self.center = {x: -0.75, y: 0}
-  self.width = 4
+  self.width = 8
 
   self.coloriser = new coloriser()
 
@@ -20,6 +21,8 @@ module.exports = function Renderer(canvas) {
   self.displayBlockStore = null
 
   self.pixelRatio = window.devicePixelRatio || 1
+
+  self.scheduler = scheduler(20)
 
   self.updateSize = function() {
     canvas.style.width = canvas.parentNode.clientWidth + 'px'
@@ -34,7 +37,7 @@ module.exports = function Renderer(canvas) {
 
     self.updateSize()
 
-    canvas.parentNode.addEventListener('keydown', deferAndDropExcess(function(evt) {
+    canvas.parentNode.addEventListener('keydown', function(evt) {
       if (evt.keyCode === 67) {
         self.coloriser.randomise(!evt.shiftKey ? 1 : -1)
         self.drawBlocksCached() // TODO: rename to redrawCurrentBlocks?
@@ -49,7 +52,7 @@ module.exports = function Renderer(canvas) {
 
         self.drawBlocksCached()
       }
-    }))
+    })
 
     canvas.addEventListener('mousedown', function(e) {
       lastMousedown.x = e.clientX
@@ -114,6 +117,7 @@ module.exports = function Renderer(canvas) {
 
   self.draw = deferAndDropExcess(function(pos) { // pos === referencePoint?
     pos = pos || self.center
+    self.scheduler.clear()
 
     // self.coloriser.clearCache() // TODO: was this a good idea when it used to work?
 
@@ -169,7 +173,7 @@ module.exports = function Renderer(canvas) {
     })
   })
 
-  self.drawBlock = function(block) {
+  self.drawBlock = self.scheduler(function(block) {
     var pix = self.ctx.createImageData(block.size, block.size)
     
     // TODO: this belongs in the coloriser
@@ -180,16 +184,18 @@ module.exports = function Renderer(canvas) {
       block.pixelPos.x,
       block.pixelPos.y
     )
-  }
+  })
 
-  self.drawBlocksCached = function() {
+  self.drawBlocksCached = deferAndDropExcess(function() {
     if (!self.displayBlockStore) {
       self.draw()
       return
     }
 
+    self.scheduler.clear()
+    //self.displayBlockStore.blocks.forEach(self.scheduler(self.drawBlock))
     self.displayBlockStore.blocks.forEach(self.drawBlock)
-  }
+  })
 
   self.scale = function(factor, pos) {
     pos = (pos || self.center)
