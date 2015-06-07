@@ -37,6 +37,7 @@
   },
   "dependencies": {
     "cssify": "^0.7.0",
-    "html2jsify": "0.0.2"
+    "html2jsify": "0.0.2",
+    "info-overlay": "0.0.1"
   }
 }

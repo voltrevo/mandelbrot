@@ -9,4 +9,25 @@ body, html {
 body {
   overflow: hidden;
   background-color: #888;
+  font-family: arial;
+  line-height: 25px;
+}
+
+p, table, ul {
+  margin-top: 25px;
+  margin-bottom: 25px;
+}
+
+a {
+  color: blue;
+  text-decoration: none
+}
+
+table {
+  border-collapse: collapse
+}
+
+td {
+  border: 1px solid black;
+  padding: 5px;
 }
