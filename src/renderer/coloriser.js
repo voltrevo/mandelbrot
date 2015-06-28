@@ -1,9 +1,9 @@
 'use strict'
 
-var colorScheme = require('./colorScheme')
+let colorScheme = require('./colorScheme')
 
 module.exports = function coloriser() {
-  var self = {}
+  let self = {}
 
   self.colorScheme = colorScheme.createRandom(colorScheme.magicValue)
   self.colorSchemeSeedOffset = 0
@@ -13,7 +13,7 @@ module.exports = function coloriser() {
 
   self.colorise = function(pointValue) {
     if (pointValue !== -1) {
-      var interpolant = self.colorScheme(self.coloringMultiplier * pointValue + self.coloringOffset)
+      let interpolant = self.colorScheme(self.coloringMultiplier * pointValue + self.coloringOffset)
 
       return {
         r: 255 * interpolant[0],
@@ -32,12 +32,12 @@ module.exports = function coloriser() {
   }
 
   self.blockDataToPixelData = function(blockData, pix) {
-    var limit = blockData.length
+    let limit = blockData.length
 
-    var inc = 0
+    let inc = 0
 
-    for (var i = 0; i < limit; i++) {
-      var c = self.colorise(blockData[i])
+    for (let i = 0; i < limit; i++) {
+      let c = self.colorise(blockData[i])
       pix.data[inc++] = c.r
       pix.data[inc++] = c.g
       pix.data[inc++] = c.b
@@ -46,15 +46,15 @@ module.exports = function coloriser() {
   }
 
   self.updateReferenceColor = function(blocks) {
-    var sampleVals = []
-    for (var i = 0; i !== blocks.length; i++) {
-      var block = blocks[i]
+    let sampleVals = []
+    for (let i = 0; i !== blocks.length; i++) {
+      let block = blocks[i]
 
       if (!block) {
         continue
       }
 
-      var val = block.data[0]
+      let val = block.data[0]
 
       if (val === -1) {
         continue
@@ -69,7 +69,7 @@ module.exports = function coloriser() {
 
   self.randomise = function(seedOffset) {
     self.colorSchemeSeedOffset += seedOffset || Math.random()
-    
+
     self.colorScheme = colorScheme.createRandom(
       colorScheme.magicValue + self.colorSchemeSeedOffset
     )

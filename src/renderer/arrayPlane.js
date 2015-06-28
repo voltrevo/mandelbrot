@@ -1,21 +1,21 @@
 'use strict'
 
-var offset = 1024 * 1024 * 1024
+let offset = 1024 * 1024 * 1024
 
 module.exports = function() {
-    var data = []
+    let data = []
 
     return {
         get: function(i, j) {
-            var slice = data[i + offset]
+            let slice = data[i + offset]
             return slice && slice[j + offset]
         },
         set: function(i, j, value) {
             i += offset
             j += offset
 
-            var slice = data[i] || (data[i] = [])
-            
+            let slice = data[i] || (data[i] = [])
+
             return (slice[j] = value)
         },
         clear: function() {

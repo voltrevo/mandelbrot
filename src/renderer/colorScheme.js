@@ -1,23 +1,23 @@
 'use strict'
 
-var lerp = require('./lerp')
-var rand = require('./rand')
+let lerp = require('./lerp')
+let rand = require('./rand')
 
-var createInterpolator = function(nodeGenerator) {
+let createInterpolator = function(nodeGenerator) {
   return function(r) {
-    var floorOfR = Math.floor(r)
-    var leftNode = nodeGenerator(floorOfR)
-    var rightNode = nodeGenerator(floorOfR + 1)
+    let floorOfR = Math.floor(r)
+    let leftNode = nodeGenerator(floorOfR)
+    let rightNode = nodeGenerator(floorOfR + 1)
 
     return lerp(leftNode, rightNode, r - floorOfR)
   }
 }
 
-var createNodeGenerator = function(seed) {
-  var randOffset = rand(seed)
-  var cacheMap = []
+let createNodeGenerator = function(seed) {
+  let randOffset = rand(seed)
+  let cacheMap = []
   return function(r) {
-    var node = cacheMap[r + 1000000]
+    let node = cacheMap[r + 1000000]
 
     if (!node) {
       node = [0, 0.333, 0.667].map(function(x) { return rand(r + randOffset + x) })
@@ -28,9 +28,9 @@ var createNodeGenerator = function(seed) {
   }
 }
 
-var createRandomInterpolator = function(seed) {
-  var offset = rand(rand(seed))
-  var baseInterpolator = createInterpolator(createNodeGenerator(seed))
+let createRandomInterpolator = function(seed) {
+  let offset = rand(rand(seed))
+  let baseInterpolator = createInterpolator(createNodeGenerator(seed))
 
   return function(r) {
     return baseInterpolator(r + offset)

@@ -1,8 +1,8 @@
 'use strict'
 
-var createLinearApproximator = require('./createLinearApproximator')
+let createLinearApproximator = require('./createLinearApproximator')
 
-var postLogScaling = createLinearApproximator(function(x) {
+let postLogScaling = createLinearApproximator(function(x) {
   return 0.5 * Math.pow(x, 1.3)
 }, 0, 25, 101)
 
@@ -13,7 +13,7 @@ module.exports = function(
   mandelWidth,
   mandelHeight
 ) {
-  var self = {}
+  let self = {}
 
   self.empty = true
   self.blocks = []
@@ -34,10 +34,10 @@ module.exports = function(
   }
 
   self.scaleBlockData = function(data, depth) {
-    var scaledData = []
+    let scaledData = []
 
-    for (var i = 0; i !== data.length; i++) {
-      var pointValue = data[i]
+    for (let i = 0; i !== data.length; i++) {
+      let pointValue = data[i]
       scaledData.push(pointValue === depth ? -1 : postLogScaling(Math.log(1 + pointValue)))
     }
 
@@ -45,7 +45,7 @@ module.exports = function(
   }
 
   self.scaleBlock = function(block) {
-    var scaledBlock = {
+    let scaledBlock = {
       size: block.size,
       pos: block.pos,
       data: self.scaleBlockData(block.data, block.depth)
@@ -64,12 +64,12 @@ module.exports = function(
   }
 
   self.calculateCentralPixelPos = function(sampleBlock) {
-    var mandelTopLeft = {
+    let mandelTopLeft = {
       x: self.mandelCenter.x - 0.5 * self.mandelWidth,
       y: self.mandelCenter.y - 0.5 * self.mandelHeight
     }
 
-    var pixelPos = {
+    let pixelPos = {
       x: (sampleBlock.pos.x - mandelTopLeft.x) / self.pixelSize,
       y: (sampleBlock.pos.y - mandelTopLeft.y) / self.pixelSize
     }

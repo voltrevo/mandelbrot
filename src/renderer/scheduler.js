@@ -1,7 +1,7 @@
 'use strict'
 
 module.exports = function Scheduler(batchTimerThreshold) {
-  var _ = {}
+  let _ = {}
 
   _.queue = []
   _.calculationScheduled = false
@@ -21,11 +21,11 @@ module.exports = function Scheduler(batchTimerThreshold) {
   }
 
   _.calculation = function() {
-    var start = Date.now()
-    var threshold = start + batchTimerThreshold
+    let start = Date.now()
+    let threshold = start + batchTimerThreshold
 
     while (_.queue.length > 0 && Date.now() < threshold) {
-      var job = _.queue.shift()
+      let job = _.queue.shift()
       job.resolve(job.fn.apply(undefined, job.args))
     }
 
@@ -36,11 +36,11 @@ module.exports = function Scheduler(batchTimerThreshold) {
     }
   }
 
-  var wrapper = function(fn) {
+  let wrapper = function(fn) {
     return function() {
-      var args = arguments
+      let args = arguments
 
-      var ret = new Promise(function(resolve) {
+      let ret = new Promise(function(resolve) {
         _.queue.push({
           fn: fn,
           args: args,
@@ -53,7 +53,7 @@ module.exports = function Scheduler(batchTimerThreshold) {
       return ret
     }
   }
-  
+
   wrapper.clear = _.clear
 
   wrapper._ = _

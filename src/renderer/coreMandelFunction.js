@@ -1,17 +1,17 @@
 'use strict'
 
 module.exports = function(re, im, depth) {
-  var a = re
-  var b = im
+  let a = re
+  let b = im
 
-  var iter = 0
-  var radius = 0
-  var lastRadius = 0
+  let iter = 0
+  let radius = 0
+  let lastRadius = 0
 
   while ((radius = a * a + b * b) < 4 && iter < depth) {
     lastRadius = radius
-    var a2 = a
-    var b2 = b
+    let a2 = a
+    let b2 = b
     a = a2 * a2 - b2 * b2 + re
     b = 2 * a2 * b2 + im
 

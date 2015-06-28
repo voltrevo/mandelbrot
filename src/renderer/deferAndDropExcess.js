@@ -1,14 +1,14 @@
 'use strict'
 
 module.exports = function deferAndDropExcess(fn) {
-    var pendingExecution = false
+    let pendingExecution = false
 
     return function() {
         if (pendingExecution) {
             return
         }
 
-        var args = arguments
+        let args = arguments
         pendingExecution = true
 
         setTimeout(function() {

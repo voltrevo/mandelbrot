@@ -1,13 +1,13 @@
 'use strict'
 
-var calculator = require('./calculator')
-var coloriser = require('./coloriser')
-var deferAndDropExcess = require('./deferAndDropExcess')
-var displayBlockStore = require('./displayBlockStore')
-var scheduler = require('./scheduler')
+let calculator = require('./calculator')
+let coloriser = require('./coloriser')
+let deferAndDropExcess = require('./deferAndDropExcess')
+let displayBlockStore = require('./displayBlockStore')
+let scheduler = require('./scheduler')
 
 module.exports = function Renderer(canvas) {
-  var self = this
+  let self = this
 
   self.depth = 500
   self.canvas = canvas
@@ -33,7 +33,7 @@ module.exports = function Renderer(canvas) {
   }
 
   ;(function() {
-    var lastMousedown = {x: 0, y: 0}
+    let lastMousedown = {x: 0, y: 0}
 
     self.updateSize()
 
@@ -60,16 +60,16 @@ module.exports = function Renderer(canvas) {
     })
 
     canvas.addEventListener('mouseup', function(e) {
-      var diff = {x: e.clientX - lastMousedown.x, y: e.clientY - lastMousedown.y}
+      let diff = {x: e.clientX - lastMousedown.x, y: e.clientY - lastMousedown.y}
 
       if (diff.x === 0 && diff.y === 0) {
         return;
       }
 
-      var pixelSize = self.width / canvas.width
-      var aspectRatio = canvas.width / canvas.height
+      let pixelSize = self.width / canvas.width
+      let aspectRatio = canvas.width / canvas.height
 
-      var pos = {
+      let pos = {
         x: (
           self.center.x -
           0.5 * self.width +
@@ -92,8 +92,8 @@ module.exports = function Renderer(canvas) {
     })
 
     canvas.addEventListener('wheel', function(e) {
-      var pixelSize = self.width / canvas.width
-      var aspectRatio = canvas.width / canvas.height
+      let pixelSize = self.width / canvas.width
+      let aspectRatio = canvas.width / canvas.height
 
       self.scale(
         e.deltaY < 0 ? 2/3 : 3/2,
@@ -126,20 +126,20 @@ module.exports = function Renderer(canvas) {
 
     // self.coloriser.clearCache() // TODO: was this a good idea when it used to work?
 
-    var pixelWidth = self.width / canvas.width
-    var aspectRatio = canvas.width / canvas.height
+    let pixelWidth = self.width / canvas.width
+    let aspectRatio = canvas.width / canvas.height
 
-    var topLeft = {
+    let topLeft = {
       x: self.center.x - 0.5 * self.width,
       y: self.center.y - 0.5 / aspectRatio * self.width
     }
 
-    var bottomRight = {
+    let bottomRight = {
       x: topLeft.x + self.width,
       y: topLeft.y + self.width / aspectRatio
     }
 
-    var begin = Date.now()
+    let begin = Date.now()
 
     self.displayBlockStore = new displayBlockStore(
       self.center,
@@ -162,7 +162,7 @@ module.exports = function Renderer(canvas) {
             return null
           }
 
-          var scaledBlock = self.displayBlockStore.scaleBlock(block)
+          let scaledBlock = self.displayBlockStore.scaleBlock(block)
           self.displayBlockStore.add(scaledBlock)
 
           self.drawBlock(scaledBlock)
@@ -171,7 +171,7 @@ module.exports = function Renderer(canvas) {
         })
       })
     ).then(function(scaledBlocks) {
-      var end = Date.now()
+      let end = Date.now()
       console.log(end - begin)
 
       self.coloriser.updateReferenceColor(scaledBlocks)
@@ -179,7 +179,7 @@ module.exports = function Renderer(canvas) {
   })
 
   self.drawBlock = self.scheduler(function(block) {
-    var pix = self.ctx.createImageData(block.size, block.size)
+    let pix = self.ctx.createImageData(block.size, block.size)
 
     // TODO: this belongs in the coloriser
     self.coloriser.blockDataToPixelData(block.data, pix)

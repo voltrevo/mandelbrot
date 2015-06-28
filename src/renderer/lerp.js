@@ -5,8 +5,8 @@ module.exports = function lerp(a, b, r) {
     return a || b
   }
 
-  var ret = new Array(a.length)
-  for (var i = 0; i !== ret.length; i++) {
+  let ret = new Array(a.length)
+  for (let i = 0; i !== ret.length; i++) {
     ret[i] = a[i] + (b[i] - a[i]) * r
   }
 

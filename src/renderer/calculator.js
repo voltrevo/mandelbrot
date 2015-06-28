@@ -1,13 +1,13 @@
 'use strict'
 
-var arrayPlane = require('./arrayPlane')
-var scheduler = require('./scheduler')
-var coreMandelFunction = require('./coreMandelFunction')
+let arrayPlane = require('./arrayPlane')
+let scheduler = require('./scheduler')
+let coreMandelFunction = require('./coreMandelFunction')
 
-var coordinateLimit = 10000
+let coordinateLimit = 10000
 
 module.exports = function() {
-    var self = {}
+    let self = {}
 
     self.center = null
 
@@ -20,7 +20,7 @@ module.exports = function() {
     self.scheduler = scheduler(30)
 
     self.calculateCoordBounds = function(topLeft, bottomRight) {
-        var blockSize = self.blockSideLength * self.pixelSize
+        let blockSize = self.blockSideLength * self.pixelSize
 
         return {
             i: {
@@ -68,7 +68,7 @@ module.exports = function() {
             }
         }
 
-        var coordBounds = self.calculateCoordBounds(topLeft, bottomRight)
+        let coordBounds = self.calculateCoordBounds(topLeft, bottomRight)
 
         if (!self.checkCoordBounds(coordBounds)) {
             self.blocks.clear()
@@ -76,7 +76,7 @@ module.exports = function() {
                 x: referencePoint.x,
                 y: referencePoint.y
             }
-            
+
             coordBounds = self.calculateCoordBounds(topLeft, bottomRight)
             if (!self.checkCoordBounds(coordBounds)) {
                 throw new Error(
@@ -85,19 +85,19 @@ module.exports = function() {
             }
         }
 
-        var blocksToCalculate = []
+        let blocksToCalculate = []
 
-        var screenWidth = bottomRight.x - topLeft.x
-        var screenHeight = bottomRight.y - topLeft.y
+        let screenWidth = bottomRight.x - topLeft.x
+        let screenHeight = bottomRight.y - topLeft.y
 
-        var sq = function(u) { return u * u }
-        var dist = function(p1, p2) {
+        let sq = function(u) { return u * u }
+        let dist = function(p1, p2) {
             return sq(screenHeight * (p1.x - p2.x)) + sq(screenWidth * (p1.y - p2.y))
         }
 
-        for (var i = coordBounds.i.min; i <= coordBounds.i.max; i++) {
-            for (var j = coordBounds.j.min; j <= coordBounds.j.max; j++) {
-                var block = {
+        for (let i = coordBounds.i.min; i <= coordBounds.i.max; i++) {
+            for (let j = coordBounds.j.min; j <= coordBounds.j.max; j++) {
+                let block = {
                     i: i,
                     j: j,
                     pos: self.coordToPos({
@@ -111,7 +111,7 @@ module.exports = function() {
                 }
 
                 // TODO: re-enable feature
-                //var cachedBlock = self.blocks.get(i, j)
+                //let cachedBlock = self.blocks.get(i, j)
                 //block.dist = cachedBlock ? 0 : dist(block.pos, referencePoint)
                 block.dist = dist(block.pos, referencePoint)
 
@@ -125,7 +125,7 @@ module.exports = function() {
 
         return blocksToCalculate.map(function(block) {
             return self.scheduler(function() {
-                var cachedBlock = self.blocks.get(block.i, block.j)
+                let cachedBlock = self.blocks.get(block.i, block.j)
 
                 if (cachedBlock) {
                     if (cachedBlock.depth === block.depth) {
@@ -148,10 +148,10 @@ module.exports = function() {
     }
 
     self.calculateRawBlock = function(pos, depth) {
-        var result = []
+        let result = []
 
-        for (var i = 0; i !== self.blockSideLength; i++) {
-            for (var j = 0; j !== self.blockSideLength; j++) {
+        for (let i = 0; i !== self.blockSideLength; i++) {
+            for (let j = 0; j !== self.blockSideLength; j++) {
                 result.push(coreMandelFunction(
                     pos.x + j * self.pixelSize,
                     pos.y + i * self.pixelSize,

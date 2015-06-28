@@ -1,25 +1,25 @@
 'use strict'
 
-var InfoOverlay = require('info-overlay')
-var InfoContent = require('./info.html')
-var Renderer = require('./renderer/index')
+let InfoOverlay = require('info-overlay')
+let InfoContent = require('./info.html')
+let Renderer = require('./renderer/index')
 
 require('./style.css')
 
 window.addEventListener('load', function() {
   document.title = 'js mandelbrot'
 
-  var canvas = document.createElement('canvas')
+  let canvas = document.createElement('canvas')
   document.body.appendChild(canvas)
 
-  var infoOverlay = InfoOverlay()
+  let infoOverlay = InfoOverlay()
   infoOverlay.overlay.innerHTML = InfoContent().innerHTML
 
   document.body.appendChild(infoOverlay.icon)
 
-  var renderer = new Renderer(canvas)
+  let renderer = new Renderer(canvas)
 
-  var resizeTimeout = null
+  let resizeTimeout = null
   window.addEventListener('resize', function() {
     clearTimeout(resizeTimeout)
 

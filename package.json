@@ -31,11 +31,13 @@
   },
   "browserify": {
     "transform": [
+      "babelify",
       "html2jsify",
       "cssify"
     ]
   },
   "dependencies": {
+    "babelify": "^6.1.2",
     "cssify": "^0.7.0",
     "html2jsify": "0.0.2",
     "info-overlay": "0.0.1"
