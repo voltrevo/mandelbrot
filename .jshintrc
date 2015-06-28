@@ -14,5 +14,6 @@
   "maxlen": 100,
   "smarttabs": true,
   "strict": true,
-  "asi": true
+  "asi": true,
+  "newcap": false
 }

@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/voltrevo/mandelbrot",
   "devDependencies": {
-    "nakedjs": "0.0.6"
+    "nakedjs": "0.1.0"
   },
   "browserify": {
     "transform": [
