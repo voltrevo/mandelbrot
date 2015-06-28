@@ -61,6 +61,11 @@ module.exports = function Renderer(canvas) {
 
     canvas.addEventListener('mouseup', function(e) {
       var diff = {x: e.clientX - lastMousedown.x, y: e.clientY - lastMousedown.y}
+
+      if (diff.x === 0 && diff.y === 0) {
+        return;
+      }
+
       var pixelSize = self.width / canvas.width
       var aspectRatio = canvas.width / canvas.height
 
@@ -175,7 +180,7 @@ module.exports = function Renderer(canvas) {
 
   self.drawBlock = self.scheduler(function(block) {
     var pix = self.ctx.createImageData(block.size, block.size)
-    
+
     // TODO: this belongs in the coloriser
     self.coloriser.blockDataToPixelData(block.data, pix)
 
