@@ -6,6 +6,26 @@ let deferAndDropExcess = require('./deferAndDropExcess')
 let displayBlockStore = require('./displayBlockStore')
 let scheduler = require('./scheduler')
 
+var getDiscreteScroll = function(el, threshold, cb) {
+  var excess = 0;
+
+  el.addEventListener('wheel', function(evt) {
+    excess += evt.deltaY;
+
+    while (excess >= threshold) {
+      cb(evt, threshold);
+      console.log(threshold);
+      excess -= threshold;
+    }
+
+    while (excess <= -threshold) {
+      cb(evt, -threshold);
+      console.log(-threshold);
+      excess += threshold;
+    }
+  });
+};
+
 module.exports = function Renderer(canvas) {
   let self = this
 
@@ -91,31 +111,49 @@ module.exports = function Renderer(canvas) {
       self.draw(pos)
     })
 
-    canvas.addEventListener('wheel', function(e) {
+    var zoom = function(dz, pos) {
       let pixelSize = self.width / canvas.width
       let aspectRatio = canvas.width / canvas.height
 
       self.scale(
-        e.deltaY < 0 ? 2/3 : 3/2,
+        dz < 0 ? 2/3 : 3/2,
         {
           x: (
             self.center.x -
             0.5 * self.width +
-            e.clientX * self.pixelRatio * pixelSize
+            pos.x * self.pixelRatio * pixelSize
           ),
           y: (
             self.center.y -
             0.5 / aspectRatio * self.width +
-            self.pixelRatio * pixelSize * e.clientY
+            self.pixelRatio * pixelSize * pos.y
           )
         }
       )
-    })
+    };
+
+    var mousePos = {
+      x: 0,
+      y: 0
+    };
+
+    canvas.addEventListener('mousemove', function(e) {
+      mousePos.x = e.clientX;
+      mousePos.y = e.clientY;
+    });
+
+    getDiscreteScroll(canvas, 30, function(e, dy) {
+      zoom(dy > 0 ? 1 : -1, mousePos);
+    });
 
     canvas.parentNode.addEventListener('keydown', function(e) {
       if (e.keyCode === 68) {
         self.depth = parseInt(window.prompt('Enter new depth', '500'))
         self.draw()
+      } else if (e.keyCode === 65) { // a
+        zoom(-1, mousePos);
+      } else if (e.keyCode === 90) { // z
+        zoom(1, mousePos);
       }
     })
   })()
