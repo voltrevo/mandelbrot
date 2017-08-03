@@ -38,8 +38,10 @@
   },
   "dependencies": {
     "babelify": "^6.1.2",
+    "browserify": "^14.4.0",
     "cssify": "^0.7.0",
     "html2jsify": "0.0.2",
-    "info-overlay": "0.0.1"
+    "info-overlay": "0.0.1",
+    "mz": "^2.6.0"
   }
 }
