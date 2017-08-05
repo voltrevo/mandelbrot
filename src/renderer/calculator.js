@@ -37,9 +37,9 @@ module.exports = function () {
   self.checkCoordBounds = function (coordBounds) {
     return (
       coordBounds.i.min >= -coordinateLimit &&
-            coordBounds.i.max <= coordinateLimit &&
-            coordBounds.j.min >= -coordinateLimit &&
-            coordBounds.j.max <= coordinateLimit
+      coordBounds.i.max <= coordinateLimit &&
+      coordBounds.j.min >= -coordinateLimit &&
+      coordBounds.j.max <= coordinateLimit
     );
   };
 
@@ -52,8 +52,8 @@ module.exports = function () {
 
   self.getBlocksForScreen = function (
     referencePoint,
-    topLeft,
-    bottomRight,
+    rect,
+    alreadyDrawnRect,
     pixelSize,
     depth,
   ) {
@@ -68,7 +68,7 @@ module.exports = function () {
       };
     }
 
-    let coordBounds = self.calculateCoordBounds(topLeft, bottomRight);
+    let coordBounds = self.calculateCoordBounds(rect.topLeft, rect.bottomRight);
 
     if (!self.checkCoordBounds(coordBounds)) {
       self.blocks.clear();
@@ -77,7 +77,7 @@ module.exports = function () {
         y: referencePoint.y,
       };
 
-      coordBounds = self.calculateCoordBounds(topLeft, bottomRight);
+      coordBounds = self.calculateCoordBounds(rect.topLeft, rect.bottomRight);
       if (!self.checkCoordBounds(coordBounds)) {
         throw new Error(
           'Failed coord bounds after reset, this should not be possible for sane inputs.',
@@ -87,16 +87,41 @@ module.exports = function () {
 
     const blocksToCalculate = [];
 
-    const screenWidth = bottomRight.x - topLeft.x;
-    const screenHeight = bottomRight.y - topLeft.y;
+    const screenWidth = rect.bottomRight.x - rect.topLeft.x;
+    const screenHeight = rect.bottomRight.y - rect.topLeft.y;
 
     const sq = function (u) { return u * u; };
     const dist = function (p1, p2) {
       return sq(screenHeight * (p1.x - p2.x)) + sq(screenWidth * (p1.y - p2.y));
     };
 
+    const isPosInsideDrawnRect = pos => (
+      pos.x >= alreadyDrawnRect.topLeft.x &&
+      pos.x < alreadyDrawnRect.bottomRight.x &&
+      pos.y >= alreadyDrawnRect.topLeft.y &&
+      pos.y < alreadyDrawnRect.bottomRight.y
+    );
+
     for (let i = coordBounds.i.min; i <= coordBounds.i.max; i++) {
       for (let j = coordBounds.j.min; j <= coordBounds.j.max; j++) {
+        const pos = self.coordToPos({ i, j });
+
+        if (alreadyDrawnRect) {
+          const lastPixelPos = {
+            x: pos.x + (self.blockSideLength - 1) * pixelSize,
+            y: pos.y + (self.blockSideLength - 1) * pixelSize,
+          };
+
+          if (
+            isPosInsideDrawnRect(pos) &&
+            isPosInsideDrawnRect(lastPixelPos)
+          ) {
+            // Skip this block because it is completely inside the already drawn
+            // rect.
+            continue;
+          }
+        }
+
         const block = {
           i,
           j,

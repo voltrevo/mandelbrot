@@ -1,6 +1,7 @@
 Features Ideas
 --------------
 
+- Debug and try to reduce time between mouseup and first draw
 - Cache scaled divergence values for faster re-colouring
 - Save image
 - Subtle info button to launch ui / also 'h' and 'F1' hotkeys

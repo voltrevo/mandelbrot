@@ -44,6 +44,9 @@ module.exports = function Renderer(canvas) {
 
   self.scheduler = scheduler(20);
 
+  self.drawBegin = null;
+  self.drawEnd = null;
+
   self.updateSize = function () {
     canvas.style.width = `${canvas.parentNode.clientWidth}px`;
     canvas.style.height = `${canvas.parentNode.clientHeight}px`;
@@ -75,11 +78,14 @@ module.exports = function Renderer(canvas) {
     });
 
     let dragData = null;
+    let dragDataComplete = false;
 
     canvas.addEventListener('mousedown', (e) => {
       lastMousedown.x = e.clientX;
       lastMousedown.y = e.clientY;
       dragData = self.ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const drawing = self.drawBegin && !self.drawEnd;
+      dragDataComplete = !drawing;
     });
 
     canvas.addEventListener('mousemove', (e) => {
@@ -103,6 +109,17 @@ module.exports = function Renderer(canvas) {
       const pixelSize = self.width / canvas.width;
       const aspectRatio = canvas.width / canvas.height;
 
+      const alreadyDrawnRect = dragDataComplete && {
+        topLeft: {
+          x: self.center.x - 0.5 * self.width,
+          y: self.center.y - 0.5 / aspectRatio * self.width,
+        },
+        bottomRight: {
+          x: self.center.x + 0.5 * self.width,
+          y: self.center.y + 0.5 / aspectRatio * self.width,
+        },
+      };
+
       const pos = {
         x: (
           self.center.x -
@@ -122,7 +139,7 @@ module.exports = function Renderer(canvas) {
         y: -diff.y * pixelSize * self.pixelRatio,
       });
 
-      self.draw(pos);
+      self.draw(pos, alreadyDrawnRect);
     });
 
     const zoom = function (dz, pos) {
@@ -172,7 +189,7 @@ module.exports = function Renderer(canvas) {
     });
   }());
 
-  self.draw = deferAndDropExcess((pos) => { // pos === referencePoint?
+  self.draw = deferAndDropExcess((pos, alreadyDrawnRect) => { // pos === referencePoint?
     pos = pos || self.center;
     self.scheduler.clear();
 
@@ -191,7 +208,10 @@ module.exports = function Renderer(canvas) {
       y: topLeft.y + self.width / aspectRatio,
     };
 
-    const begin = Date.now();
+    const rect = { topLeft, bottomRight };
+
+    self.drawBegin = Date.now();
+    self.drawEnd = null;
 
     self.displayBlockStore = new displayBlockStore(
       self.center,
@@ -201,28 +221,37 @@ module.exports = function Renderer(canvas) {
       self.width / self.canvas.width * self.canvas.height,
     );
 
+    let incompleteDraw = false;
+
     Promise.all(
       self.calculator.getBlocksForScreen(
         pos,
-        topLeft,
-        bottomRight,
+        rect,
+        alreadyDrawnRect,
         pixelWidth,
         self.depth,
       ).map(blockPromise => blockPromise.then((block) => {
         if (!block) {
+          incompleteDraw = true;
           return null;
         }
 
         const scaledBlock = self.displayBlockStore.scaleBlock(block);
         self.displayBlockStore.add(scaledBlock);
 
-        self.drawBlock(scaledBlock);
+        return self.drawBlock(scaledBlock).then((drawn) => {
+          if (!drawn) {
+            incompleteDraw = true;
+          }
 
-        return scaledBlock;
+          return scaledBlock;
+        });
       })),
     ).then((scaledBlocks) => {
-      const end = Date.now();
-      console.log(end - begin);
+      if (!incompleteDraw) {
+        self.drawEnd = Date.now();
+        console.log(self.drawEnd - self.drawBegin);
+      }
 
       self.coloriser.updateReferenceColor(scaledBlocks);
     });
@@ -239,6 +268,8 @@ module.exports = function Renderer(canvas) {
       block.pixelPos.x,
       block.pixelPos.y,
     );
+
+    return true;
   });
 
   self.drawBlocksCached = deferAndDropExcess(() => {
