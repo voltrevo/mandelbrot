@@ -6,26 +6,6 @@ const deferAndDropExcess = require('./deferAndDropExcess');
 const displayBlockStore = require('./displayBlockStore');
 const scheduler = require('./scheduler');
 
-const getDiscreteScroll = function (el, threshold, cb) {
-  let excess = 0;
-
-  el.addEventListener('wheel', (evt) => {
-    excess += evt.deltaY;
-
-    while (excess >= threshold) {
-      cb(evt, threshold);
-      console.log(threshold);
-      excess -= threshold;
-    }
-
-    while (excess <= -threshold) {
-      cb(evt, -threshold);
-      console.log(-threshold);
-      excess += threshold;
-    }
-  });
-};
-
 module.exports = function Renderer(canvas) {
   const self = this;
 
@@ -367,10 +347,6 @@ module.exports = function Renderer(canvas) {
     canvas.addEventListener('mousemove', (e) => {
       mousePos.x = e.clientX;
       mousePos.y = e.clientY;
-    });
-
-    getDiscreteScroll(canvas, 30, (e, dy) => {
-      zoom(dy > 0 ? 1 : -1, mousePos);
     });
 
     canvas.parentNode.addEventListener('keydown', (e) => {
