@@ -75,34 +75,32 @@ module.exports = function Renderer(canvas) {
       }
     });
 
-    let touchSession = null;
+    let pressSession = null;
 
-    const touchSessionRef = () => {
-      if (!touchSession) {
+    const pressSessionRef = () => {
+      if (!pressSession) {
         return null;
       }
 
-      if (!touchSession.secondary) {
-        return touchSession.primary;
+      if (!pressSession.secondary) {
+        return pressSession.primary;
       }
 
       return {
         start: {
-          x: 0.5 * (touchSession.primary.start.x + touchSession.secondary.start.x),
-          y: 0.5 * (touchSession.primary.start.y + touchSession.secondary.start.y),
+          x: 0.5 * (pressSession.primary.start.x + pressSession.secondary.start.x),
+          y: 0.5 * (pressSession.primary.start.y + pressSession.secondary.start.y),
         },
         curr: {
-          x: 0.5 * (touchSession.primary.curr.x + touchSession.secondary.curr.x),
-          y: 0.5 * (touchSession.primary.curr.y + touchSession.secondary.curr.y),
+          x: 0.5 * (pressSession.primary.curr.x + pressSession.secondary.curr.x),
+          y: 0.5 * (pressSession.primary.curr.y + pressSession.secondary.curr.y),
         },
       };
     };
 
-    canvas.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-
-      if (!touchSession) {
-        touchSession = {
+    const onPressStart = (press) => {
+      if (!pressSession) {
+        pressSession = {
           dragData: (() => {
             const cvs = document.createElement('canvas');
             cvs.setAttribute('width', canvas.width);
@@ -118,119 +116,99 @@ module.exports = function Renderer(canvas) {
         };
       }
 
-      Array.from(e.changedTouches).forEach((touch) => {
-        const touchDetails = {
-          id: touch.identifier,
-          start: {
-            x: touch.clientX,
-            y: touch.clientY,
-          },
-          curr: {
-            x: touch.clientX,
-            y: touch.clientY,
-          },
-        };
+      const pressDetails = {
+        id: press.id,
+        start: { x: press.x, y: press.y },
+        curr: { x: press.x, y: press.y },
+      };
 
-        if (!touchSession.primary) {
-          touchSession.primary = touchDetails;
-        } else if (!touchSession.secondary) {
-          touchSession.secondary = touchDetails;
-        }
-      });
-    });
+      if (!pressSession.primary) {
+        pressSession.primary = pressDetails;
+      } else if (!pressSession.secondary) {
+        pressSession.secondary = pressDetails;
+      }
+    };
 
-    canvas.addEventListener('touchmove', (e) => {
-      if (!touchSession) {
+    const onPressMove = (press) => {
+      if (!pressSession) {
         return;
       }
 
-      let primaryTouchChanged = false;
-      let secondaryTouchChanged = false;
+      let primaryPressChanged = false;
+      let secondaryPressChanged = false;
 
-      const primaryTouch = Array.from(e.changedTouches).filter(t => t.identifier === touchSession.primary.id)[0];
+      if (press.id === pressSession.primary.id) {
+        pressSession.primary.curr.x = press.x;
+        pressSession.primary.curr.y = press.y;
 
-      if (primaryTouch) {
-        e.preventDefault();
-
-        touchSession.primary.curr.x = primaryTouch.clientX;
-        touchSession.primary.curr.y = primaryTouch.clientY;
-
-        primaryTouchChanged = true;
+        primaryPressChanged = true;
       }
 
-      if (touchSession.secondary) {
-        const secondaryTouch = Array.from(e.changedTouches).filter(t => t.identifier === touchSession.secondary.id)[0];
+      if (press.id === (pressSession.secondary && pressSession.secondary.id)) {
+        pressSession.secondary.curr.x = press.x;
+        pressSession.secondary.curr.y = press.y;
 
-        if (secondaryTouch) {
-          touchSession.secondary.curr.x = secondaryTouch.clientX;
-          touchSession.secondary.curr.y = secondaryTouch.clientY;
+        const sq = x => x * x;
+        const dist = (p1, p2) => Math.sqrt(sq(p1.x - p2.x) + sq(p1.y - p2.y));
 
-          const sq = x => x * x;
-          const dist = (p1, p2) => Math.sqrt(sq(p1.x - p2.x) + sq(p1.y - p2.y));
+        pressSession.zoom = (
+          dist(pressSession.primary.curr, pressSession.secondary.curr) /
+          dist(pressSession.primary.start, pressSession.secondary.start)
+        );
 
-          touchSession.zoom = (
-            dist(touchSession.primary.curr, touchSession.secondary.curr) /
-            dist(touchSession.primary.start, touchSession.secondary.start)
-          );
-
-          secondaryTouchChanged = true;
-        }
+        secondaryPressChanged = true;
       }
 
-      if (primaryTouchChanged || secondaryTouchChanged) {
-        const refTouch = touchSessionRef();
-        const diff = { x: refTouch.curr.x - refTouch.start.x, y: refTouch.curr.y - refTouch.start.y };
+      if (primaryPressChanged || secondaryPressChanged) {
+        const refPress = pressSessionRef();
+        const diff = { x: refPress.curr.x - refPress.start.x, y: refPress.curr.y - refPress.start.y };
         self.ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        const zoom = touchSession.zoom || 1;
+        const zoom = pressSession.zoom || 1;
 
         let dx = 0;
         dx += self.pixelRatio * diff.x;
-        dx += self.pixelRatio * refTouch.start.x * (1 - zoom);
+        dx += self.pixelRatio * refPress.start.x * (1 - zoom);
 
         let dy = 0;
         dy += self.pixelRatio * diff.y;
-        dy += self.pixelRatio * refTouch.start.y * (1 - zoom);
+        dy += self.pixelRatio * refPress.start.y * (1 - zoom);
 
         self.ctx.drawImage(
-          touchSession.dragData,
+          pressSession.dragData,
           dx,
           dy,
-          touchSession.dragData.width * zoom,
-          touchSession.dragData.height * zoom,
+          pressSession.dragData.width * zoom,
+          pressSession.dragData.height * zoom,
         );
       }
-    });
+    };
 
-    canvas.addEventListener('touchcancel', (e) => {
-      if (!touchSession) {
+    const onPressCancel = (press) => {
+      if (!pressSession) {
         return;
       }
 
-      const primaryTouch = Array.from(e.changedTouches).filter(t => t.identifier === touchSession.primary.id)[0];
-
-      if (!primaryTouch) {
+      if (press.id !== pressSession.primary.id) {
         return;
       }
 
-      touchSession = null;
+      pressSession = null;
       self.draw(self.center);
-    });
+    };
 
-    canvas.addEventListener('touchend', (e) => {
-      if (!touchSession) {
+    const onPressEnd = (press) => {
+      if (!pressSession) {
         return;
       }
 
-      const primaryTouch = Array.from(e.changedTouches).filter(t => t.identifier === touchSession.primary.id)[0];
-
-      if (!primaryTouch) {
+      if (press.id !== pressSession.primary.id) {
         return;
       }
 
-      const refTouch = touchSessionRef();
+      const refPress = pressSessionRef();
 
-      const diff = { x: refTouch.curr.x - refTouch.start.x, y: refTouch.curr.y - refTouch.start.y };
+      const diff = { x: refPress.curr.x - refPress.start.x, y: refPress.curr.y - refPress.start.y };
 
       if (diff.x === 0 && diff.y === 0) {
         return;
@@ -248,20 +226,20 @@ module.exports = function Renderer(canvas) {
           x: self.center.x + 0.5 * self.width,
           y: self.center.y + 0.5 / aspectRatio * self.width,
         },
-        needsRedraw: touchSession.dragDataIncomplete || touchSession.zoom,
+        needsRedraw: pressSession.dragDataIncomplete || pressSession.zoom,
       };
 
       const pos = {
         x: (
           self.center.x -
           0.5 * self.width +
-          refTouch.start.x * self.pixelRatio * pixelSize
+          refPress.start.x * self.pixelRatio * pixelSize
         ),
         y: (
           self.center.y -
           0.5 / aspectRatio *
           self.width +
-          refTouch.start.y * self.pixelRatio * pixelSize
+          refPress.start.y * self.pixelRatio * pixelSize
         ),
       };
 
@@ -270,13 +248,94 @@ module.exports = function Renderer(canvas) {
         y: -diff.y * pixelSize * self.pixelRatio,
       });
 
-      if (touchSession.zoom) {
-        self.scale(1 / touchSession.zoom, pos, alreadyDrawnRect);
+      if (pressSession.zoom) {
+        self.scale(1 / pressSession.zoom, pos, alreadyDrawnRect);
       } else {
         self.draw(pos, alreadyDrawnRect);
       }
 
-      touchSession = null;
+      pressSession = null;
+    };
+
+    let clickCount = 0;
+    let clickInProgress = false;
+
+    canvas.addEventListener('mousedown', (e) => {
+      if (clickInProgress) {
+        return;
+      }
+
+      clickInProgress = true;
+
+      onPressStart({
+        x: e.clientX,
+        y: e.clientY,
+        id: `click${clickCount}`,
+      });
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      onPressMove({
+        x: e.clientX,
+        y: e.clientY,
+        id: `click${clickCount}`,
+      });
+    });
+
+    canvas.addEventListener('mouseup', (e) => {
+      clickInProgress = false;
+
+      onPressEnd({
+        x: e.clientX,
+        y: e.clientY,
+        id: `click${clickCount}`,
+      });
+
+      clickCount++;
+    });
+
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+
+      Array.from(e.changedTouches).forEach((touch) => {
+        onPressStart({
+          x: touch.clientX,
+          y: touch.clientY,
+          id: `touch${touch.identifier}`,
+        });
+      });
+    });
+
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+
+      Array.from(e.changedTouches).forEach((touch) => {
+        onPressMove({
+          x: touch.clientX,
+          y: touch.clientY,
+          id: `touch${touch.identifier}`,
+        });
+      });
+    });
+
+    canvas.addEventListener('touchcancel', (e) => {
+      Array.from(e.changedTouches).forEach((touch) => {
+        onPressCancel({
+          x: touch.clientX,
+          y: touch.clientY,
+          id: `touch${touch.identifier}`,
+        });
+      });
+    });
+
+    canvas.addEventListener('touchend', (e) => {
+      Array.from(e.changedTouches).forEach((touch) => {
+        onPressCancel({
+          x: touch.clientX,
+          y: touch.clientY,
+          id: `touch${touch.identifier}`,
+        });
+      });
     });
 
     const zoom = function (dz, pos) {
