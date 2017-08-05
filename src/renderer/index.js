@@ -56,8 +56,6 @@ module.exports = function Renderer(canvas) {
   }
 
   ;(function () {
-    const lastMousedown = { x: 0, y: 0 };
-
     self.updateSize();
 
     canvas.parentNode.addEventListener('keydown', (evt) => {
@@ -77,30 +75,145 @@ module.exports = function Renderer(canvas) {
       }
     });
 
-    let dragData = null;
-    let dragDataComplete = false;
+    let touchSession = null;
 
-    canvas.addEventListener('mousedown', (e) => {
-      lastMousedown.x = e.clientX;
-      lastMousedown.y = e.clientY;
-      dragData = self.ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const drawing = self.drawBegin && !self.drawEnd;
-      dragDataComplete = !drawing;
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+
+      if (!touchSession) {
+        const touch = e.changedTouches[0];
+
+        touchSession = {
+          primary: {
+            id: touch.identifier,
+            start: {
+              x: touch.clientX,
+              y: touch.clientY,
+            },
+            curr: {
+              x: touch.clientX,
+              y: touch.clientY,
+            },
+          },
+          dragData: (() => {
+            const cvs = document.createElement('canvas');
+            cvs.setAttribute('width', canvas.width);
+            cvs.setAttribute('height', canvas.height);
+
+            const ctx = cvs.getContext('2d');
+            const imgData = self.ctx.getImageData(0, 0, canvas.width, canvas.height);
+            ctx.putImageData(imgData, 0, 0);
+
+            return cvs;
+          })(),
+          dragDataIncomplete: self.drawBegin && !self.drawEnd,
+        };
+      } else if (!touchSession.secondary) {
+        const touch = Array.from(e.changedTouches).filter(t => t.identifier !== touchSession.primaryId)[0];
+
+        touchSession.secondary = {
+          id: touch.identifier,
+          start: {
+            x: touch.clientX,
+            y: touch.clientY,
+          },
+          curr: {
+            x: touch.clientX,
+            y: touch.clientY,
+          },
+        };
+      }
     });
 
-    canvas.addEventListener('mousemove', (e) => {
-      if (!dragData) {
+    canvas.addEventListener('touchmove', (e) => {
+      if (!touchSession) {
         return;
       }
 
-      const diff = { x: e.clientX - lastMousedown.x, y: e.clientY - lastMousedown.y };
-      self.ctx.clearRect(0, 0, canvas.width, canvas.height);
-      self.ctx.putImageData(dragData, self.pixelRatio * diff.x, self.pixelRatio * diff.y);
+      let primaryTouchChanged = false;
+      let secondaryTouchChanged = false;
+
+      const primaryTouch = Array.from(e.changedTouches).filter(t => t.identifier === touchSession.primary.id)[0];
+
+      if (primaryTouch) {
+        e.preventDefault();
+
+        touchSession.primary.curr.x = primaryTouch.clientX;
+        touchSession.primary.curr.y = primaryTouch.clientY;
+
+        primaryTouchChanged = true;
+      }
+
+      if (touchSession.secondary) {
+        const secondaryTouch = Array.from(e.changedTouches).filter(t => t.identifier === touchSession.secondary.id)[0];
+
+        if (secondaryTouch) {
+          touchSession.secondary.curr.x = secondaryTouch.clientX;
+          touchSession.secondary.curr.y = secondaryTouch.clientY;
+
+          const sq = x => x * x;
+          const dist = (p1, p2) => Math.sqrt(sq(p1.x - p2.x) + sq(p1.y - p2.y));
+
+          touchSession.zoom = (
+            dist(touchSession.primary.curr, touchSession.secondary.curr) /
+            dist(touchSession.primary.start, touchSession.secondary.start)
+          );
+
+          secondaryTouchChanged = true;
+        }
+      }
+
+      if (primaryTouchChanged || secondaryTouchChanged) {
+        const diff = { x: touchSession.primary.curr.x - touchSession.primary.start.x, y: touchSession.primary.curr.y - touchSession.primary.start.y };
+        self.ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const zoom = touchSession.zoom || 1;
+
+        let dx = 0;
+        dx += self.pixelRatio * diff.x;
+        dx += self.pixelRatio * touchSession.primary.start.x * (1 - zoom);
+
+        let dy = 0;
+        dy += self.pixelRatio * diff.y;
+        dy += self.pixelRatio * touchSession.primary.start.y * (1 - zoom);
+
+        self.ctx.drawImage(
+          touchSession.dragData,
+          dx,
+          dy,
+          touchSession.dragData.width * zoom,
+          touchSession.dragData.height * zoom,
+        );
+      }
     });
 
-    canvas.addEventListener('mouseup', (e) => {
-      dragData = null;
-      const diff = { x: e.clientX - lastMousedown.x, y: e.clientY - lastMousedown.y };
+    canvas.addEventListener('touchcancel', (e) => {
+      if (!touchSession) {
+        return;
+      }
+
+      const primaryTouch = Array.from(e.changedTouches).filter(t => t.identifier === touchSession.primary.id)[0];
+
+      if (!primaryTouch) {
+        return;
+      }
+
+      touchSession = null;
+      self.draw(self.center);
+    });
+
+    canvas.addEventListener('touchend', (e) => {
+      if (!touchSession) {
+        return;
+      }
+
+      const primaryTouch = Array.from(e.changedTouches).filter(t => t.identifier === touchSession.primary.id)[0];
+
+      if (!primaryTouch) {
+        return;
+      }
+
+      const diff = { x: e.changedTouches[0].clientX - touchSession.primary.start.x, y: e.changedTouches[0].clientY - touchSession.primary.start.y };
 
       if (diff.x === 0 && diff.y === 0) {
         return;
@@ -109,7 +222,7 @@ module.exports = function Renderer(canvas) {
       const pixelSize = self.width / canvas.width;
       const aspectRatio = canvas.width / canvas.height;
 
-      const alreadyDrawnRect = dragDataComplete && {
+      const alreadyDrawnRect = touchSession.dragDataIncomplete || touchSession.zoom ? null : {
         topLeft: {
           x: self.center.x - 0.5 * self.width,
           y: self.center.y - 0.5 / aspectRatio * self.width,
@@ -124,13 +237,13 @@ module.exports = function Renderer(canvas) {
         x: (
           self.center.x -
           0.5 * self.width +
-          lastMousedown.x * self.pixelRatio * pixelSize
+          touchSession.primary.start.x * self.pixelRatio * pixelSize
         ),
         y: (
           self.center.y -
           0.5 / aspectRatio *
           self.width +
-          lastMousedown.y * self.pixelRatio * pixelSize
+          touchSession.primary.start.y * self.pixelRatio * pixelSize
         ),
       };
 
@@ -139,7 +252,13 @@ module.exports = function Renderer(canvas) {
         y: -diff.y * pixelSize * self.pixelRatio,
       });
 
-      self.draw(pos, alreadyDrawnRect);
+      if (touchSession.zoom) {
+        self.scale(1 / touchSession.zoom, pos);
+      } else {
+        self.draw(pos, alreadyDrawnRect);
+      }
+
+      touchSession = null;
     });
 
     const zoom = function (dz, pos) {

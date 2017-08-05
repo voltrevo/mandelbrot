@@ -9,6 +9,11 @@ require('./style.css');
 window.addEventListener('load', () => {
   document.title = 'js mandelbrot';
 
+  const disableScaleMeta = document.createElement('meta');
+  disableScaleMeta.setAttribute('name', 'viewport');
+  disableScaleMeta.setAttribute('content', 'user-scalable=no');
+  document.head.appendChild(disableScaleMeta);
+
   const canvas = document.createElement('canvas');
   document.body.appendChild(canvas);
 
