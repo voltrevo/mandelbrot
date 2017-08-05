@@ -215,7 +215,7 @@ module.exports = function Renderer(canvas) {
       const pixelSize = self.width / canvas.width;
       const aspectRatio = canvas.width / canvas.height;
 
-      const alreadyDrawnRect = touchSession.dragDataIncomplete || touchSession.zoom ? null : {
+      const alreadyDrawnRect = {
         topLeft: {
           x: self.center.x - 0.5 * self.width,
           y: self.center.y - 0.5 / aspectRatio * self.width,
@@ -224,6 +224,7 @@ module.exports = function Renderer(canvas) {
           x: self.center.x + 0.5 * self.width,
           y: self.center.y + 0.5 / aspectRatio * self.width,
         },
+        needsRedraw: touchSession.dragDataIncomplete || touchSession.zoom,
       };
 
       const pos = {
@@ -246,7 +247,7 @@ module.exports = function Renderer(canvas) {
       });
 
       if (touchSession.zoom) {
-        self.scale(1 / touchSession.zoom, pos);
+        self.scale(1 / touchSession.zoom, pos, alreadyDrawnRect);
       } else {
         self.draw(pos, alreadyDrawnRect);
       }
@@ -395,7 +396,7 @@ module.exports = function Renderer(canvas) {
     self.displayBlockStore.blocks.forEach(self.drawBlock);
   });
 
-  self.scale = function (factor, pos) {
+  self.scale = function (factor, pos, alreadyDrawnRect) {
     pos = (pos || self.center);
 
     self.center = {
@@ -405,7 +406,7 @@ module.exports = function Renderer(canvas) {
 
     self.width *= factor;
 
-    self.draw(pos);
+    self.draw(pos, alreadyDrawnRect);
   };
 
   self.moveCenter = function (p) {

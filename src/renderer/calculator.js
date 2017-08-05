@@ -85,7 +85,8 @@ module.exports = function () {
       }
     }
 
-    const blocksToCalculate = [];
+    let blocksToCalculate = [];
+    const blocksToCalculateLater = [];
 
     const screenWidth = rect.bottomRight.x - rect.topLeft.x;
     const screenHeight = rect.bottomRight.y - rect.topLeft.y;
@@ -104,24 +105,6 @@ module.exports = function () {
 
     for (let i = coordBounds.i.min; i <= coordBounds.i.max; i++) {
       for (let j = coordBounds.j.min; j <= coordBounds.j.max; j++) {
-        const pos = self.coordToPos({ i, j });
-
-        if (alreadyDrawnRect) {
-          const lastPixelPos = {
-            x: pos.x + (self.blockSideLength - 1) * pixelSize,
-            y: pos.y + (self.blockSideLength - 1) * pixelSize,
-          };
-
-          if (
-            isPosInsideDrawnRect(pos) &&
-            isPosInsideDrawnRect(lastPixelPos)
-          ) {
-            // Skip this block because it is completely inside the already drawn
-            // rect.
-            continue;
-          }
-        }
-
         const block = {
           i,
           j,
@@ -140,11 +123,34 @@ module.exports = function () {
         // block.dist = cachedBlock ? 0 : dist(block.pos, referencePoint)
         block.dist = dist(block.pos, referencePoint);
 
+        if (alreadyDrawnRect) {
+          const lastPixelPos = {
+            x: block.pos.x + (self.blockSideLength - 1) * pixelSize,
+            y: block.pos.y + (self.blockSideLength - 1) * pixelSize,
+          };
+
+          if (
+            isPosInsideDrawnRect(block.pos) &&
+            isPosInsideDrawnRect(lastPixelPos)
+          ) {
+            if (alreadyDrawnRect.needsRedraw) {
+              blocksToCalculateLater.push(block);
+            }
+
+            // Skip this block because it is completely inside the already drawn
+            // rect.
+            continue;
+          }
+        }
+
         blocksToCalculate.push(block);
       }
     }
 
     blocksToCalculate.sort((a, b) => a.dist - b.dist);
+    blocksToCalculateLater.sort((a, b) => a.dist - b.dist);
+
+    blocksToCalculate = [...blocksToCalculate, ...blocksToCalculateLater];
 
     return blocksToCalculate.map(block => self.scheduler(() => {
       const cachedBlock = self.blocks.get(block.i, block.j);
