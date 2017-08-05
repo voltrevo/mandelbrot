@@ -81,20 +81,7 @@ module.exports = function Renderer(canvas) {
       e.preventDefault();
 
       if (!touchSession) {
-        const touch = e.changedTouches[0];
-
         touchSession = {
-          primary: {
-            id: touch.identifier,
-            start: {
-              x: touch.clientX,
-              y: touch.clientY,
-            },
-            curr: {
-              x: touch.clientX,
-              y: touch.clientY,
-            },
-          },
           dragData: (() => {
             const cvs = document.createElement('canvas');
             cvs.setAttribute('width', canvas.width);
@@ -108,10 +95,10 @@ module.exports = function Renderer(canvas) {
           })(),
           dragDataIncomplete: self.drawBegin && !self.drawEnd,
         };
-      } else if (!touchSession.secondary) {
-        const touch = Array.from(e.changedTouches).filter(t => t.identifier !== touchSession.primaryId)[0];
+      }
 
-        touchSession.secondary = {
+      Array.from(e.changedTouches).forEach((touch) => {
+        const touchDetails = {
           id: touch.identifier,
           start: {
             x: touch.clientX,
@@ -122,7 +109,13 @@ module.exports = function Renderer(canvas) {
             y: touch.clientY,
           },
         };
-      }
+
+        if (!touchSession.primary) {
+          touchSession.primary = touchDetails;
+        } else if (!touchSession.secondary) {
+          touchSession.secondary = touchDetails;
+        }
+      });
     });
 
     canvas.addEventListener('touchmove', (e) => {
