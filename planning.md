@@ -2,6 +2,7 @@ Features Ideas
 --------------
 
 - Debug and try to reduce time between mouseup and first draw
+- Detect insufficient depth by analysing number of points escaping on the last available iteration
 - Cache scaled divergence values for faster re-colouring
 - Save image
 - Subtle info button to launch ui / also 'h' and 'F1' hotkeys
