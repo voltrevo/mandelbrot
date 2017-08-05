@@ -310,7 +310,7 @@ module.exports = function Renderer(canvas) {
 
     canvas.addEventListener('touchend', (e) => {
       Array.from(e.changedTouches).forEach((touch) => {
-        onPressCancel({
+        onPressEnd({
           x: touch.clientX,
           y: touch.clientY,
           id: `touch${touch.identifier}`,
