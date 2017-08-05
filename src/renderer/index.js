@@ -88,6 +88,7 @@ module.exports = function Renderer(canvas) {
       }
 
       const diff = { x: e.clientX - lastMousedown.x, y: e.clientY - lastMousedown.y };
+      self.ctx.clearRect(0, 0, canvas.width, canvas.height);
       self.ctx.putImageData(dragData, self.pixelRatio * diff.x, self.pixelRatio * diff.y);
     });
 
