@@ -77,6 +77,27 @@ module.exports = function Renderer(canvas) {
 
     let touchSession = null;
 
+    const touchSessionRef = () => {
+      if (!touchSession) {
+        return null;
+      }
+
+      if (!touchSession.secondary) {
+        return touchSession.primary;
+      }
+
+      return {
+        start: {
+          x: 0.5 * (touchSession.primary.start.x + touchSession.secondary.start.x),
+          y: 0.5 * (touchSession.primary.start.y + touchSession.secondary.start.y),
+        },
+        curr: {
+          x: 0.5 * (touchSession.primary.curr.x + touchSession.secondary.curr.x),
+          y: 0.5 * (touchSession.primary.curr.y + touchSession.secondary.curr.y),
+        },
+      };
+    };
+
     canvas.addEventListener('touchstart', (e) => {
       e.preventDefault();
 
@@ -157,18 +178,19 @@ module.exports = function Renderer(canvas) {
       }
 
       if (primaryTouchChanged || secondaryTouchChanged) {
-        const diff = { x: touchSession.primary.curr.x - touchSession.primary.start.x, y: touchSession.primary.curr.y - touchSession.primary.start.y };
+        const refTouch = touchSessionRef();
+        const diff = { x: refTouch.curr.x - refTouch.start.x, y: refTouch.curr.y - refTouch.start.y };
         self.ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         const zoom = touchSession.zoom || 1;
 
         let dx = 0;
         dx += self.pixelRatio * diff.x;
-        dx += self.pixelRatio * touchSession.primary.start.x * (1 - zoom);
+        dx += self.pixelRatio * refTouch.start.x * (1 - zoom);
 
         let dy = 0;
         dy += self.pixelRatio * diff.y;
-        dy += self.pixelRatio * touchSession.primary.start.y * (1 - zoom);
+        dy += self.pixelRatio * refTouch.start.y * (1 - zoom);
 
         self.ctx.drawImage(
           touchSession.dragData,
@@ -206,7 +228,9 @@ module.exports = function Renderer(canvas) {
         return;
       }
 
-      const diff = { x: e.changedTouches[0].clientX - touchSession.primary.start.x, y: e.changedTouches[0].clientY - touchSession.primary.start.y };
+      const refTouch = touchSessionRef();
+
+      const diff = { x: refTouch.curr.x - refTouch.start.x, y: refTouch.curr.y - refTouch.start.y };
 
       if (diff.x === 0 && diff.y === 0) {
         return;
@@ -231,13 +255,13 @@ module.exports = function Renderer(canvas) {
         x: (
           self.center.x -
           0.5 * self.width +
-          touchSession.primary.start.x * self.pixelRatio * pixelSize
+          refTouch.start.x * self.pixelRatio * pixelSize
         ),
         y: (
           self.center.y -
           0.5 / aspectRatio *
           self.width +
-          touchSession.primary.start.y * self.pixelRatio * pixelSize
+          refTouch.start.y * self.pixelRatio * pixelSize
         ),
       };
 
