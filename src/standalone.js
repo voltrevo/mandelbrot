@@ -1,33 +1,33 @@
-'use strict'
+'use strict';
 
-let InfoOverlay = require('info-overlay')
-let InfoContent = require('./info.html')
-let Renderer = require('./renderer/index')
+const InfoOverlay = require('info-overlay');
+const InfoContent = require('./info.html');
+const Renderer = require('./renderer/index');
 
-require('./style.css')
+require('./style.css');
 
-window.addEventListener('load', function() {
-  document.title = 'js mandelbrot'
+window.addEventListener('load', () => {
+  document.title = 'js mandelbrot';
 
-  let canvas = document.createElement('canvas')
-  document.body.appendChild(canvas)
+  const canvas = document.createElement('canvas');
+  document.body.appendChild(canvas);
 
-  let infoOverlay = InfoOverlay()
-  infoOverlay.overlay.innerHTML = InfoContent().innerHTML
+  const infoOverlay = InfoOverlay();
+  infoOverlay.overlay.innerHTML = InfoContent().innerHTML;
 
-  document.body.appendChild(infoOverlay.icon)
+  document.body.appendChild(infoOverlay.icon);
 
-  let renderer = new Renderer(canvas)
+  const renderer = new Renderer(canvas);
 
-  let resizeTimeout = null
-  window.addEventListener('resize', function() {
-    clearTimeout(resizeTimeout)
+  let resizeTimeout = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
 
-    resizeTimeout = setTimeout(function() {
-      renderer.updateSize()
-      renderer.draw()
-    }, 300)
-  })
+    resizeTimeout = setTimeout(() => {
+      renderer.updateSize();
+      renderer.draw();
+    }, 300);
+  });
 
-  renderer.draw()
-})
+  renderer.draw();
+});
