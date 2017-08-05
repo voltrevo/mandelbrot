@@ -74,12 +74,25 @@ module.exports = function Renderer(canvas) {
       }
     });
 
+    let dragData = null;
+
     canvas.addEventListener('mousedown', (e) => {
       lastMousedown.x = e.clientX;
       lastMousedown.y = e.clientY;
+      dragData = self.ctx.getImageData(0, 0, canvas.width, canvas.height);
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (!dragData) {
+        return;
+      }
+
+      const diff = { x: e.clientX - lastMousedown.x, y: e.clientY - lastMousedown.y };
+      self.ctx.putImageData(dragData, self.pixelRatio * diff.x, self.pixelRatio * diff.y);
     });
 
     canvas.addEventListener('mouseup', (e) => {
+      dragData = null;
       const diff = { x: e.clientX - lastMousedown.x, y: e.clientY - lastMousedown.y };
 
       if (diff.x === 0 && diff.y === 0) {
