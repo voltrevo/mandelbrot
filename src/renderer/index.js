@@ -24,6 +24,7 @@ module.exports = function Renderer(canvas) {
 
   self.scheduler = scheduler(20);
 
+  self.drawIndex = 0;
   self.drawBegin = null;
   self.drawEnd = null;
 
@@ -364,6 +365,8 @@ module.exports = function Renderer(canvas) {
   self.draw = deferAndDropExcess((pos, alreadyDrawnRect) => { // pos === referencePoint?
     pos = pos || self.center;
     self.scheduler.clear();
+    self.drawIndex++;
+    const drawIndex = self.drawIndex;
 
     // self.coloriser.clearCache() // TODO: was this a good idea when it used to work?
 
@@ -410,6 +413,10 @@ module.exports = function Renderer(canvas) {
       if (!block.later) {
         jobs.push(() => block.calculateOnePoint()
           .then((pointValue) => {
+            if (drawIndex !== self.drawIndex || pointValue === null) {
+              return;
+            }
+
             const scaled = self.displayBlockStore.scalePoint(pointValue, block.depth);
             const colorised = self.coloriser.colorise(scaled);
 
@@ -432,6 +439,10 @@ module.exports = function Renderer(canvas) {
         if (!calc) {
           incompleteDraw = true;
           return null;
+        }
+
+        if (drawIndex !== self.drawIndex) {
+          return Promise.resolve();
         }
 
         const scaledBlock = self.displayBlockStore.scaleBlock(block);
