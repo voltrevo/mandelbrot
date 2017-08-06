@@ -395,15 +395,41 @@ module.exports = function Renderer(canvas) {
 
     let incompleteDraw = false;
 
-    Promise.all(
-      self.calculator.getBlocksForScreen(
-        pos,
-        rect,
-        alreadyDrawnRect,
-        pixelWidth,
-        self.depth,
-      ).map(blockPromise => blockPromise.then((block) => {
-        if (!block) {
+    const blocks = self.calculator.getBlocksForScreen(
+      pos,
+      rect,
+      alreadyDrawnRect,
+      pixelWidth,
+      self.depth,
+    );
+
+    const jobs = [];
+    const jobsLater = [];
+
+    blocks.forEach((block) => {
+      if (!block.later) {
+        jobs.push(() => block.calculateOnePoint()
+          .then((pointValue) => {
+            const scaled = self.displayBlockStore.scalePoint(pointValue, block.depth);
+            const colorised = self.coloriser.colorise(scaled);
+
+            if (!self.displayBlockStore.centralPixelPos) {
+              self.displayBlockStore.centralPixelPos = self.displayBlockStore.calculateCentralPixelPos(block);
+            }
+
+            const pixelPos = {
+              x: self.displayBlockStore.centralPixelPos.x + block.size * block.j,
+              y: self.displayBlockStore.centralPixelPos.y + block.size * block.i,
+            };
+
+            self.ctx.fillStyle = `rgba(${Math.floor(colorised.r)},${Math.floor(colorised.g)},${Math.floor(colorised.b)},${Math.floor(colorised.a)}`;
+            self.ctx.fillRect(pixelPos.x, pixelPos.y, block.size, block.size);
+          }),
+        );
+      }
+
+      jobsLater.push(() => block.calculate().then((calc) => {
+        if (!calc) {
           incompleteDraw = true;
           return null;
         }
@@ -418,15 +444,26 @@ module.exports = function Renderer(canvas) {
 
           return scaledBlock;
         });
-      })),
-    ).then((scaledBlocks) => {
-      if (!incompleteDraw) {
-        self.drawEnd = Date.now();
-        console.log(self.drawEnd - self.drawBegin);
-      }
-
-      self.coloriser.updateReferenceColor(scaledBlocks);
+      }));
     });
+
+    const promises = [];
+    promises.push(...jobs.map(job => job()));
+
+    const scaledBlocksPromise = Promise.all(jobsLater.map(job => job()))
+      .then((scaledBlocks) => {
+        if (!incompleteDraw) {
+          self.drawEnd = Date.now();
+          console.log(self.drawEnd - self.drawBegin);
+        }
+
+        self.coloriser.updateReferenceColor(scaledBlocks);
+      })
+    ;
+
+    promises.push(scaledBlocksPromise);
+
+    return Promise.all(promises);
   });
 
   self.drawBlock = self.scheduler((block) => {

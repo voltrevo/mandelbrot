@@ -31,6 +31,10 @@ module.exports = function (
     self.empty = false;
   };
 
+  self.scalePoint = (pointValue, depth) => (
+    pointValue === depth ? -1 : postLogScaling(Math.log(1 + pointValue))
+  );
+
   self.scaleBlockData = function (data, depth) {
     const scaledData = [];
 

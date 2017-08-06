@@ -116,6 +116,30 @@ module.exports = function () {
           depth,
           data: [],
           batchIndex: self.batchIndex,
+          calculate: self.scheduler(() => {
+            const cachedBlock = self.blocks.get(block.i, block.j);
+
+            if (cachedBlock) {
+              if (cachedBlock.depth === block.depth) {
+                return cachedBlock;
+              }
+              // TODO: recalculate only some pixels
+            }
+
+            if (block.batchIndex !== self.batchIndex) {
+              return null;
+            }
+
+            self.calculateBlock(block);
+            self.blocks.set(block.i, block.j, block);
+
+            return block;
+          }),
+          calculateOnePoint: self.scheduler(() => {
+            const pos = self.coordToPos({ i: i + 0.5, j: j + 0.5 });
+            return coreMandelFunction(pos.x, pos.y, depth);
+          }),
+          later: false,
         };
 
         // TODO: re-enable feature
@@ -135,6 +159,7 @@ module.exports = function () {
           ) {
             if (alreadyDrawnRect.needsRedraw) {
               blocksToCalculateLater.push(block);
+              block.later = true;
             }
 
             // Skip this block because it is completely inside the already drawn
@@ -152,25 +177,7 @@ module.exports = function () {
 
     blocksToCalculate = [...blocksToCalculate, ...blocksToCalculateLater];
 
-    return blocksToCalculate.map(block => self.scheduler(() => {
-      const cachedBlock = self.blocks.get(block.i, block.j);
-
-      if (cachedBlock) {
-        if (cachedBlock.depth === block.depth) {
-          return cachedBlock;
-        }
-        // TODO: recalculate only some pixels
-      }
-
-      if (block.batchIndex !== self.batchIndex) {
-        return null;
-      }
-
-      self.calculateBlock(block);
-      self.blocks.set(block.i, block.j, block);
-
-      return block;
-    })());
+    return blocksToCalculate;
   };
 
   self.calculateRawBlock = function (pos, depth) {
