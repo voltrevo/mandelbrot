@@ -29,11 +29,15 @@ module.exports = function Renderer(canvas) {
   self.drawEnd = null;
 
   self.updateSize = function () {
+    const imgData = self.ctx.getImageData(0, 0, canvas.width, canvas.height);
+
     canvas.style.width = `${canvas.parentNode.clientWidth}px`;
     canvas.style.height = `${canvas.parentNode.clientHeight}px`;
 
     canvas.width = self.pixelRatio * canvas.parentNode.clientWidth;
     canvas.height = self.pixelRatio * canvas.parentNode.clientHeight;
+
+    self.ctx.putImageData(imgData, 0, 0);
   }
 
   ;(function () {
