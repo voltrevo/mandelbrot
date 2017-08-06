@@ -95,6 +95,8 @@ module.exports = function Renderer(canvas) {
           })(),
           dragDataIncomplete: self.drawBegin && !self.drawEnd,
         };
+
+        self.drawIndex++;
       }
 
       const pressDetails = {
@@ -448,7 +450,7 @@ module.exports = function Renderer(canvas) {
         const scaledBlock = self.displayBlockStore.scaleBlock(block);
         self.displayBlockStore.add(scaledBlock);
 
-        return self.drawBlock(scaledBlock).then((drawn) => {
+        return self.drawBlock(scaledBlock, drawIndex).then((drawn) => {
           if (!drawn) {
             incompleteDraw = true;
           }
@@ -477,7 +479,11 @@ module.exports = function Renderer(canvas) {
     return Promise.all(promises);
   });
 
-  self.drawBlock = self.scheduler((block) => {
+  self.drawBlock = self.scheduler((block, drawIndex) => {
+    if (drawIndex !== self.drawIndex) {
+      return true;
+    }
+
     const pix = self.ctx.createImageData(block.size, block.size);
 
     // TODO: this belongs in the coloriser
