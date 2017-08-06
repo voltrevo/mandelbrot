@@ -85,20 +85,31 @@ module.exports = function Renderer(canvas) {
 
     const onPressStart = (press) => {
       if (!pressSession) {
-        pressSession = {
-          dragData: (() => {
-            const cvs = document.createElement('canvas');
-            cvs.setAttribute('width', canvas.width);
-            cvs.setAttribute('height', canvas.height);
+        pressSession = (() => {
+          const dragData = document.createElement('canvas');
+          dragData.setAttribute('width', canvas.width);
+          dragData.setAttribute('height', canvas.height);
 
-            const ctx = cvs.getContext('2d');
-            const imgData = self.ctx.getImageData(0, 0, canvas.width, canvas.height);
-            ctx.putImageData(imgData, 0, 0);
+          const ctx = dragData.getContext('2d');
 
-            return cvs;
-          })(),
-          dragDataIncomplete: self.drawBegin && !self.drawEnd,
-        };
+          ctx.drawImage(canvas, 0, 0, 2, 2);
+          const averageImgData = ctx.getImageData(0, 0, 2, 2);
+          const dat = averageImgData.data;
+          const a = [
+            0.25 * [dat[0] + dat[4] + dat[8] + dat[12]],
+            0.25 * [dat[1] + dat[5] + dat[9] + dat[13]],
+            0.25 * [dat[2] + dat[6] + dat[10] + dat[14]],
+            0.25 * [dat[3] + dat[7] + dat[11] + dat[15]],
+          ].map(n => Math.floor(n));
+          const dragColor = `rgba(${a.join(', ')})`;
+
+          const imgData = self.ctx.getImageData(0, 0, canvas.width, canvas.height);
+          ctx.putImageData(imgData, 0, 0);
+
+          const dragDataIncomplete = self.drawBegin && !self.drawEnd;
+
+          return { dragData, dragColor, dragDataIncomplete };
+        })();
 
         self.drawIndex++;
       }
@@ -149,7 +160,8 @@ module.exports = function Renderer(canvas) {
       if (primaryPressChanged || secondaryPressChanged) {
         const refPress = pressSessionRef();
         const diff = { x: refPress.curr.x - refPress.start.x, y: refPress.curr.y - refPress.start.y };
-        self.ctx.clearRect(0, 0, canvas.width, canvas.height);
+        self.ctx.fillStyle = pressSession.dragColor;
+        self.ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         const zoom = pressSession.zoom || 1;
 
