@@ -428,7 +428,7 @@ module.exports = function Renderer(canvas) {
     const jobsLater = [];
 
     blocks.forEach((block) => {
-      if (!block.later) {
+      if (!block.later && alreadyDrawnRect) {
         jobs.push(() => block.calculateOnePoint()
           .then((pointValue) => {
             if (drawIndex !== self.drawIndex || pointValue === null) {
