@@ -121,7 +121,8 @@ module.exports = function () {
 
             if (cachedBlock) {
               if (cachedBlock.depth === block.depth) {
-                return cachedBlock;
+                block.data = cachedBlock.data;
+                return block;
               }
               // TODO: recalculate only some pixels
             }
