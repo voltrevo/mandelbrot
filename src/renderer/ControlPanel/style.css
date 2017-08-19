@@ -35,7 +35,7 @@
   height: 100vh;
   transition: opacity 0.3s, left 0.3s;
   position: absolute;
-  padding: 15px;
+  padding: 23px;
   box-sizing: border-box;
 }
 
