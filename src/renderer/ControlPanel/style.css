@@ -34,7 +34,7 @@
   height: 100vh;
   transition: opacity 0.3s, left 0.3s;
   position: absolute;
-  padding: 23px;
+  padding: 15px;
   box-sizing: border-box;
 }
 
@@ -59,4 +59,22 @@
 
 .control-panel:not(.expanded) #contract-text {
   opacity: 0;
+}
+
+.control-panel .panel h4 {
+  margin-top: 8px;
+  margin-bottom: 25px;
+}
+
+.control-panel .panel .button {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  transition: background-color 0.3s;
+}
+
+.control-panel .panel .button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
 }
