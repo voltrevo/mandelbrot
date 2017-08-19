@@ -1,8 +1,11 @@
 'use strict';
 
-require('./style.css');
+const InfoOverlay = require('info-overlay');
 
 const Element = require('./Element.html');
+const InfoContent = require('./info.html');
+
+require('./style.css');
 
 const ControlPanel = () => {
   const el = Element();
@@ -21,6 +24,11 @@ const ControlPanel = () => {
       }),
     );
   });
+
+  const infoOverlay = InfoOverlay();
+  infoOverlay.overlay.innerHTML = InfoContent().innerHTML;
+
+  el.querySelector('#information-button').addEventListener('click', () => infoOverlay.icon.click());
 
   return el;
 };
