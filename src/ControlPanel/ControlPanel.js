@@ -7,7 +7,7 @@ const InfoContent = require('./info.html');
 
 require('./style.css');
 
-const ControlPanel = () => {
+const ControlPanel = controls => {
   const el = Element();
   const icon = el.querySelector('.icon');
 
@@ -29,6 +29,26 @@ const ControlPanel = () => {
   infoOverlay.overlay.innerHTML = InfoContent().innerHTML;
 
   el.querySelector('#information-button').addEventListener('click', () => infoOverlay.icon.click());
+
+  (() => {
+    const randomise = e => {
+      controls.randomiseColors(e.shiftKey ? -1 : 1);
+    };
+
+    el.querySelector('#randomise-colors-button').addEventListener('click', randomise);
+
+    el.querySelector('#randomise-colors-button .previous').addEventListener('click', e => {
+      controls.randomiseColors(e.shiftKey ? 1 : -1);
+      e.stopPropagation();
+    });
+
+    window.addEventListener('keydown', e => {
+      if (e.keyCode === 67) {
+        // 'c'
+        randomise(e);
+      }
+    });
+  })();
 
   return el;
 };

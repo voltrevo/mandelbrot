@@ -42,11 +42,18 @@ module.exports = function Renderer(canvas) {
   (() => {
     self.updateSize();
 
+    self.controls = {};
+
+    self.controls.randomiseColors = randShift => {
+      self.coloriser.randomise(randShift);
+      self.drawBlocksCached(); // TODO: rename to redrawCurrentBlocks?
+    };
+
     canvas.parentNode.addEventListener('keydown', evt => {
-      if (evt.keyCode === 67) {
-        self.coloriser.randomise(!evt.shiftKey ? 1 : -1);
-        self.drawBlocksCached(); // TODO: rename to redrawCurrentBlocks?
-      }
+      // if (evt.keyCode === 67) {
+      //   self.coloriser.randomise(!evt.shiftKey ? 1 : -1);
+      //   self.drawBlocksCached(); // TODO: rename to redrawCurrentBlocks?
+      // }
 
       if (evt.keyCode === 187 || evt.keyCode === 189) {
         if (evt.shiftKey) {

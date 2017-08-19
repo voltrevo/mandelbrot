@@ -8,8 +8,6 @@ require('./style.css');
 window.addEventListener('load', () => {
   document.title = 'js mandelbrot';
 
-  document.body.appendChild(ControlPanel());
-
   const disableScaleMeta = document.createElement('meta');
   disableScaleMeta.setAttribute('name', 'viewport');
   disableScaleMeta.setAttribute('content', 'user-scalable=no');
@@ -19,6 +17,8 @@ window.addEventListener('load', () => {
   document.body.appendChild(canvas);
 
   const renderer = new Renderer(canvas);
+
+  document.body.appendChild(ControlPanel(renderer.controls));
 
   let resizeTimeout = null;
   window.addEventListener('resize', () => {
