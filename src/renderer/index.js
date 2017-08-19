@@ -2,15 +2,9 @@
 
 const calculator = require('./calculator');
 const coloriser = require('./coloriser');
-const ControlPanel = require('./ControlPanel');
 const deferAndDropExcess = require('./deferAndDropExcess');
 const displayBlockStore = require('./displayBlockStore');
 const scheduler = require('./scheduler');
-
-// TODO: This doesn't belong here
-window.addEventListener('load', () => {
-  document.body.appendChild(ControlPanel());
-});
 
 module.exports = function Renderer(canvas) {
   const self = this;

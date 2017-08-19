@@ -1,5 +1,6 @@
 'use strict';
 
+const ControlPanel = require('./ControlPanel');
 const InfoOverlay = require('info-overlay');
 const InfoContent = require('./info.html');
 const Renderer = require('./renderer/index');
@@ -8,6 +9,8 @@ require('./style.css');
 
 window.addEventListener('load', () => {
   document.title = 'js mandelbrot';
+
+  document.body.appendChild(ControlPanel());
 
   const disableScaleMeta = document.createElement('meta');
   disableScaleMeta.setAttribute('name', 'viewport');
