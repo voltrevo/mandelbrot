@@ -3,6 +3,8 @@
   left: 0;
   top: 0;
   color: white;
+  user-select: none;
+  cursor: default;
 }
 
 .control-panel .icon {
