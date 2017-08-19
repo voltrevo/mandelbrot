@@ -5,7 +5,7 @@
   "main": "renderer/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "./node_modules/.bin/nakedjs src/standalone.js",
+    "start": "nakedjs src/standalone.js",
     "format": "git ls-files | grep '\\.js$' | xargs eslint --fix && git ls-files | grep '\\.js$' | xargs prettier --write --print-width 100 --single-quote --trailing-comma all"
   },
   "repository": {
