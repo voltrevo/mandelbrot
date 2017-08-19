@@ -6,7 +6,7 @@ const coreMandelFunction = require('./coreMandelFunction');
 
 const coordinateLimit = 10000;
 
-module.exports = function () {
+module.exports = () => {
   const self = {};
 
   self.center = null;
@@ -19,7 +19,7 @@ module.exports = function () {
 
   self.scheduler = scheduler(30);
 
-  self.calculateCoordBounds = function (topLeft, bottomRight) {
+  self.calculateCoordBounds = (topLeft, bottomRight) => {
     const blockSize = self.blockSideLength * self.pixelSize;
 
     return {
@@ -34,29 +34,18 @@ module.exports = function () {
     };
   };
 
-  self.checkCoordBounds = function (coordBounds) {
-    return (
-      coordBounds.i.min >= -coordinateLimit &&
-      coordBounds.i.max <= coordinateLimit &&
-      coordBounds.j.min >= -coordinateLimit &&
-      coordBounds.j.max <= coordinateLimit
-    );
-  };
+  self.checkCoordBounds = coordBounds =>
+    coordBounds.i.min >= -coordinateLimit &&
+    coordBounds.i.max <= coordinateLimit &&
+    coordBounds.j.min >= -coordinateLimit &&
+    coordBounds.j.max <= coordinateLimit;
 
-  self.coordToPos = function (coord) {
-    return {
-      x: self.center.x + coord.j * self.blockSideLength * self.pixelSize,
-      y: self.center.y + coord.i * self.blockSideLength * self.pixelSize,
-    };
-  };
+  self.coordToPos = coord => ({
+    x: self.center.x + coord.j * self.blockSideLength * self.pixelSize,
+    y: self.center.y + coord.i * self.blockSideLength * self.pixelSize,
+  });
 
-  self.getBlocksForScreen = function (
-    referencePoint,
-    rect,
-    alreadyDrawnRect,
-    pixelSize,
-    depth,
-  ) {
+  self.getBlocksForScreen = (referencePoint, rect, alreadyDrawnRect, pixelSize, depth) => {
     self.batchIndex++;
 
     if (pixelSize !== self.pixelSize) {
@@ -91,17 +80,14 @@ module.exports = function () {
     const screenWidth = rect.bottomRight.x - rect.topLeft.x;
     const screenHeight = rect.bottomRight.y - rect.topLeft.y;
 
-    const sq = function (u) { return u * u; };
-    const dist = function (p1, p2) {
-      return sq(screenHeight * (p1.x - p2.x)) + sq(screenWidth * (p1.y - p2.y));
-    };
+    const sq = u => u * u;
+    const dist = (p1, p2) => sq(screenHeight * (p1.x - p2.x)) + sq(screenWidth * (p1.y - p2.y));
 
-    const isPosInsideDrawnRect = pos => (
+    const isPosInsideDrawnRect = pos =>
       pos.x >= alreadyDrawnRect.topLeft.x &&
       pos.x < alreadyDrawnRect.bottomRight.x &&
       pos.y >= alreadyDrawnRect.topLeft.y &&
-      pos.y < alreadyDrawnRect.bottomRight.y
-    );
+      pos.y < alreadyDrawnRect.bottomRight.y;
 
     for (let i = coordBounds.i.min; i <= coordBounds.i.max; i++) {
       for (let j = coordBounds.j.min; j <= coordBounds.j.max; j++) {
@@ -154,10 +140,7 @@ module.exports = function () {
             y: block.pos.y + (self.blockSideLength - 1) * pixelSize,
           };
 
-          if (
-            isPosInsideDrawnRect(block.pos) &&
-            isPosInsideDrawnRect(lastPixelPos)
-          ) {
+          if (isPosInsideDrawnRect(block.pos) && isPosInsideDrawnRect(lastPixelPos)) {
             if (alreadyDrawnRect.needsRedraw) {
               blocksToCalculateLater.push(block);
               block.later = true;
@@ -181,23 +164,21 @@ module.exports = function () {
     return blocksToCalculate;
   };
 
-  self.calculateRawBlock = function (pos, depth) {
+  self.calculateRawBlock = (pos, depth) => {
     const result = [];
 
     for (let i = 0; i !== self.blockSideLength; i++) {
       for (let j = 0; j !== self.blockSideLength; j++) {
-        result.push(coreMandelFunction(
-          pos.x + j * self.pixelSize,
-          pos.y + i * self.pixelSize,
-          depth,
-        ));
+        result.push(
+          coreMandelFunction(pos.x + j * self.pixelSize, pos.y + i * self.pixelSize, depth),
+        );
       }
     }
 
     return result;
   };
 
-  self.calculateBlock = function (block) {
+  self.calculateBlock = block => {
     block.data = self.calculateRawBlock(
       self.coordToPos({
         i: block.i,

@@ -3,12 +3,11 @@
 module.exports = function deferAndDropExcess(fn) {
   let pendingExecution = false;
 
-  return function () {
+  return (...args) => {
     if (pendingExecution) {
       return;
     }
 
-    const args = arguments;
     pendingExecution = true;
 
     setTimeout(() => {

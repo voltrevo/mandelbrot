@@ -3,20 +3,18 @@
 const lerp = require('./lerp');
 const rand = require('./rand');
 
-const createInterpolator = function (nodeGenerator) {
-  return function (r) {
-    const floorOfR = Math.floor(r);
-    const leftNode = nodeGenerator(floorOfR);
-    const rightNode = nodeGenerator(floorOfR + 1);
+const createInterpolator = nodeGenerator => r => {
+  const floorOfR = Math.floor(r);
+  const leftNode = nodeGenerator(floorOfR);
+  const rightNode = nodeGenerator(floorOfR + 1);
 
-    return lerp(leftNode, rightNode, r - floorOfR);
-  };
+  return lerp(leftNode, rightNode, r - floorOfR);
 };
 
-const createNodeGenerator = function (seed) {
+const createNodeGenerator = seed => {
   const randOffset = rand(seed);
   const cacheMap = [];
-  return function (r) {
+  return r => {
     let node = cacheMap[r + 1000000];
 
     if (!node) {
@@ -28,13 +26,11 @@ const createNodeGenerator = function (seed) {
   };
 };
 
-const createRandomInterpolator = function (seed) {
+const createRandomInterpolator = seed => {
   const offset = rand(rand(seed));
   const baseInterpolator = createInterpolator(createNodeGenerator(seed));
 
-  return function (r) {
-    return baseInterpolator(r + offset);
-  };
+  return r => baseInterpolator(r + offset);
 };
 
 module.exports = {

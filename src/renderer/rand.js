@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = function rand(seed) {
+module.exports = seed => {
   for (let i = 0; i !== 10; ++i) {
     seed -= (seed * seed + 1) / (2 * seed);
   }

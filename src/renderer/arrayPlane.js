@@ -2,7 +2,7 @@
 
 const offset = 1024 * 1024 * 1024;
 
-module.exports = function () {
+module.exports = () => {
   let data = [];
 
   return {

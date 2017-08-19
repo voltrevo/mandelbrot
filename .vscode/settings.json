@@ -4,5 +4,6 @@
   "prettier.printWidth": 100,
   "prettier.singleQuote": true,
   "prettier.trailingComma": "all",
-  "eslint.autoFixOnSave": true
+  "eslint.autoFixOnSave": true,
+  "editor.rulers": [100]
 }

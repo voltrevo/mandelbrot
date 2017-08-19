@@ -6,11 +6,9 @@ module.exports = function Scheduler(batchTimerThreshold) {
   _.queue = [];
   _.calculationScheduled = false;
 
-  _.clear = function () {
-    _.queue = [];
-  };
+  _.clear = () => (_.queue = []);
 
-  _.scheduleCalculation = function () {
+  _.scheduleCalculation = () => {
     if (_.calculationScheduled) {
       return;
     }
@@ -20,7 +18,7 @@ module.exports = function Scheduler(batchTimerThreshold) {
     _.calculationScheduled = true;
   };
 
-  _.calculation = function () {
+  _.calculation = () => {
     const start = Date.now();
     const threshold = start + batchTimerThreshold;
 
@@ -36,22 +34,18 @@ module.exports = function Scheduler(batchTimerThreshold) {
     }
   };
 
-  const wrapper = function (fn) {
-    return function () {
-      const args = arguments;
+  const wrapper = fn => (...args) => {
+    const ret = new Promise(resolve => {
+      _.queue.push({
+        fn,
+        args,
+        resolve,
+      });
+    });
 
-      const ret = new Promise(((resolve) => {
-        _.queue.push({
-          fn,
-          args,
-          resolve,
-        });
-      }));
+    _.scheduleCalculation();
 
-      _.scheduleCalculation();
-
-      return ret;
-    };
+    return ret;
   };
 
   wrapper.clear = _.clear;

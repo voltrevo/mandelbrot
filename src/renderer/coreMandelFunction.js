@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = function (re, im, depth) {
+module.exports = (re, im, depth) => {
   let a = re;
   let b = im;
 
@@ -8,7 +8,13 @@ module.exports = function (re, im, depth) {
   let radius = 0;
   let lastRadius = 0;
 
-  while ((radius = a * a + b * b) < 4 && iter < depth) {
+  while (true) {
+    radius = a * a + b * b;
+
+    if (radius >= 4 || iter >= depth) {
+      break;
+    }
+
     lastRadius = radius;
     const a2 = a;
     const b2 = b;

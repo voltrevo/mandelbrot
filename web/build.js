@@ -11,20 +11,9 @@ module.exports = async ({
 }) => {
   await addStaticDir(path.join(__dirname, 'static'), outputDir);
 
-  const browserify = path.join(
-    __dirname,
-    '..',
-    'node_modules',
-    '.bin',
-    'browserify',
-  );
+  const browserify = path.join(__dirname, '..', 'node_modules', '.bin', 'browserify');
 
-  const standaloneJs = path.join(
-    __dirname,
-    '..',
-    'src',
-    'standalone.js',
-  );
+  const standaloneJs = path.join(__dirname, '..', 'src', 'standalone.js');
 
   const dst = path.join(outputDir, 'index.js');
 

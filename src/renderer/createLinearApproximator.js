@@ -7,7 +7,7 @@ module.exports = function createLinearApproximator(f, a, b, n) {
     nodes.push(f(a + i / (n - 1) * (b - a)));
   }
 
-  return function (x) {
+  return x => {
     const relPos = (x - a) / (b - a) * (n - 1);
     const leftNode = Math.floor(relPos);
     const rightNode = Math.ceil(relPos);

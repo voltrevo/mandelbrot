@@ -15,7 +15,7 @@ module.exports = function Renderer(canvas) {
   self.center = { x: -0.75, y: 0 };
   self.width = 8;
 
-  self.coloriser = new coloriser();
+  self.coloriser = coloriser();
 
   self.calculator = calculator();
   self.displayBlockStore = null;
@@ -28,7 +28,7 @@ module.exports = function Renderer(canvas) {
   self.drawBegin = null;
   self.drawEnd = null;
 
-  self.updateSize = function () {
+  self.updateSize = () => {
     const imgData = self.ctx.getImageData(0, 0, canvas.width, canvas.height);
 
     canvas.style.width = `${canvas.parentNode.clientWidth}px`;
@@ -38,12 +38,11 @@ module.exports = function Renderer(canvas) {
     canvas.height = self.pixelRatio * canvas.parentNode.clientHeight;
 
     self.ctx.putImageData(imgData, 0, 0);
-  }
-
-  ;(function () {
+  };
+  (() => {
     self.updateSize();
 
-    canvas.parentNode.addEventListener('keydown', (evt) => {
+    canvas.parentNode.addEventListener('keydown', evt => {
       if (evt.keyCode === 67) {
         self.coloriser.randomise(!evt.shiftKey ? 1 : -1);
         self.drawBlocksCached(); // TODO: rename to redrawCurrentBlocks?
@@ -83,7 +82,7 @@ module.exports = function Renderer(canvas) {
       };
     };
 
-    const onPressStart = (press) => {
+    const onPressStart = press => {
       if (!pressSession) {
         pressSession = (() => {
           const dragData = document.createElement('canvas');
@@ -127,7 +126,7 @@ module.exports = function Renderer(canvas) {
       }
     };
 
-    const onPressMove = (press) => {
+    const onPressMove = press => {
       if (!pressSession) {
         return;
       }
@@ -149,17 +148,19 @@ module.exports = function Renderer(canvas) {
         const sq = x => x * x;
         const dist = (p1, p2) => Math.sqrt(sq(p1.x - p2.x) + sq(p1.y - p2.y));
 
-        pressSession.zoom = (
+        pressSession.zoom =
           dist(pressSession.primary.curr, pressSession.secondary.curr) /
-          dist(pressSession.primary.start, pressSession.secondary.start)
-        );
+          dist(pressSession.primary.start, pressSession.secondary.start);
 
         secondaryPressChanged = true;
       }
 
       if (primaryPressChanged || secondaryPressChanged) {
         const refPress = pressSessionRef();
-        const diff = { x: refPress.curr.x - refPress.start.x, y: refPress.curr.y - refPress.start.y };
+        const diff = {
+          x: refPress.curr.x - refPress.start.x,
+          y: refPress.curr.y - refPress.start.y,
+        };
         self.ctx.fillStyle = pressSession.dragColor;
         self.ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -183,7 +184,7 @@ module.exports = function Renderer(canvas) {
       }
     };
 
-    const onPressCancel = (press) => {
+    const onPressCancel = press => {
       if (!pressSession) {
         return;
       }
@@ -196,7 +197,7 @@ module.exports = function Renderer(canvas) {
       self.draw(self.center);
     };
 
-    const onPressEnd = (press) => {
+    const onPressEnd = press => {
       if (!pressSession) {
         return;
       }
@@ -229,17 +230,11 @@ module.exports = function Renderer(canvas) {
       };
 
       const pos = {
-        x: (
-          self.center.x -
-          0.5 * self.width +
-          refPress.start.x * self.pixelRatio * pixelSize
-        ),
-        y: (
+        x: self.center.x - 0.5 * self.width + refPress.start.x * self.pixelRatio * pixelSize,
+        y:
           self.center.y -
-          0.5 / aspectRatio *
-          self.width +
-          refPress.start.y * self.pixelRatio * pixelSize
-        ),
+          0.5 / aspectRatio * self.width +
+          refPress.start.y * self.pixelRatio * pixelSize,
       };
 
       self.moveCenter({
@@ -259,7 +254,7 @@ module.exports = function Renderer(canvas) {
     let clickCount = 0;
     let clickInProgress = false;
 
-    canvas.addEventListener('mousedown', (e) => {
+    canvas.addEventListener('mousedown', e => {
       if (clickInProgress) {
         return;
       }
@@ -273,7 +268,7 @@ module.exports = function Renderer(canvas) {
       });
     });
 
-    canvas.addEventListener('mousemove', (e) => {
+    canvas.addEventListener('mousemove', e => {
       onPressMove({
         x: e.clientX,
         y: e.clientY,
@@ -281,7 +276,7 @@ module.exports = function Renderer(canvas) {
       });
     });
 
-    canvas.addEventListener('mouseup', (e) => {
+    canvas.addEventListener('mouseup', e => {
       clickInProgress = false;
 
       onPressEnd({
@@ -293,10 +288,10 @@ module.exports = function Renderer(canvas) {
       clickCount++;
     });
 
-    canvas.addEventListener('touchstart', (e) => {
+    canvas.addEventListener('touchstart', e => {
       e.preventDefault();
 
-      Array.from(e.changedTouches).forEach((touch) => {
+      Array.from(e.changedTouches).forEach(touch => {
         onPressStart({
           x: touch.clientX,
           y: touch.clientY,
@@ -305,10 +300,10 @@ module.exports = function Renderer(canvas) {
       });
     });
 
-    canvas.addEventListener('touchmove', (e) => {
+    canvas.addEventListener('touchmove', e => {
       e.preventDefault();
 
-      Array.from(e.changedTouches).forEach((touch) => {
+      Array.from(e.changedTouches).forEach(touch => {
         onPressMove({
           x: touch.clientX,
           y: touch.clientY,
@@ -317,8 +312,8 @@ module.exports = function Renderer(canvas) {
       });
     });
 
-    canvas.addEventListener('touchcancel', (e) => {
-      Array.from(e.changedTouches).forEach((touch) => {
+    canvas.addEventListener('touchcancel', e => {
+      Array.from(e.changedTouches).forEach(touch => {
         onPressCancel({
           x: touch.clientX,
           y: touch.clientY,
@@ -327,8 +322,8 @@ module.exports = function Renderer(canvas) {
       });
     });
 
-    canvas.addEventListener('touchend', (e) => {
-      Array.from(e.changedTouches).forEach((touch) => {
+    canvas.addEventListener('touchend', e => {
+      Array.from(e.changedTouches).forEach(touch => {
         onPressEnd({
           x: touch.clientX,
           y: touch.clientY,
@@ -337,25 +332,14 @@ module.exports = function Renderer(canvas) {
       });
     });
 
-    const zoom = function (dz, pos) {
+    const zoom = (dz, pos) => {
       const pixelSize = self.width / canvas.width;
       const aspectRatio = canvas.width / canvas.height;
 
-      self.scale(
-        dz < 0 ? 2 / 3 : 3 / 2,
-        {
-          x: (
-            self.center.x -
-            0.5 * self.width +
-            pos.x * self.pixelRatio * pixelSize
-          ),
-          y: (
-            self.center.y -
-            0.5 / aspectRatio * self.width +
-            self.pixelRatio * pixelSize * pos.y
-          ),
-        },
-      );
+      self.scale(dz < 0 ? 2 / 3 : 3 / 2, {
+        x: self.center.x - 0.5 * self.width + pos.x * self.pixelRatio * pixelSize,
+        y: self.center.y - 0.5 / aspectRatio * self.width + self.pixelRatio * pixelSize * pos.y,
+      });
     };
 
     const mousePos = {
@@ -363,24 +347,27 @@ module.exports = function Renderer(canvas) {
       y: 0,
     };
 
-    canvas.addEventListener('mousemove', (e) => {
+    canvas.addEventListener('mousemove', e => {
       mousePos.x = e.clientX;
       mousePos.y = e.clientY;
     });
 
-    canvas.parentNode.addEventListener('keydown', (e) => {
+    canvas.parentNode.addEventListener('keydown', e => {
       if (e.keyCode === 68) {
-        self.depth = parseInt(window.prompt('Enter new depth', '500'));
+        self.depth = Number(window.prompt('Enter new depth', '500'));
         self.draw();
-      } else if (e.keyCode === 65) { // a
+      } else if (e.keyCode === 65) {
+        // a
         zoom(-1, mousePos);
-      } else if (e.keyCode === 90) { // z
+      } else if (e.keyCode === 90) {
+        // z
         zoom(1, mousePos);
       }
     });
-  }());
+  })();
 
-  self.draw = deferAndDropExcess((pos, alreadyDrawnRect) => { // pos === referencePoint?
+  self.draw = deferAndDropExcess((pos, alreadyDrawnRect) => {
+    // pos === referencePoint?
     pos = pos || self.center;
     self.scheduler.clear();
     self.drawIndex++;
@@ -406,7 +393,7 @@ module.exports = function Renderer(canvas) {
     self.drawBegin = Date.now();
     self.drawEnd = null;
 
-    self.displayBlockStore = new displayBlockStore(
+    self.displayBlockStore = displayBlockStore(
       self.center,
       self.canvas.width,
       self.canvas.height,
@@ -427,10 +414,10 @@ module.exports = function Renderer(canvas) {
     const jobs = [];
     const jobsLater = [];
 
-    blocks.forEach((block) => {
+    blocks.forEach(block => {
       if (!block.later && alreadyDrawnRect) {
-        jobs.push(() => block.calculateOnePoint()
-          .then((pointValue) => {
+        jobs.push(() =>
+          block.calculateOnePoint().then(pointValue => {
             if (drawIndex !== self.drawIndex || pointValue === null) {
               return;
             }
@@ -439,7 +426,8 @@ module.exports = function Renderer(canvas) {
             const colorised = self.coloriser.colorise(scaled);
 
             if (!self.displayBlockStore.centralPixelPos) {
-              self.displayBlockStore.centralPixelPos = self.displayBlockStore.calculateCentralPixelPos(block);
+              const centralPixelPos = self.displayBlockStore.calculateCentralPixelPos(block);
+              self.displayBlockStore.centralPixelPos = centralPixelPos;
             }
 
             const pixelPos = {
@@ -447,48 +435,50 @@ module.exports = function Renderer(canvas) {
               y: self.displayBlockStore.centralPixelPos.y + block.size * block.i,
             };
 
-            self.ctx.fillStyle = `rgba(${Math.floor(colorised.r)},${Math.floor(colorised.g)},${Math.floor(colorised.b)},${Math.floor(colorised.a)}`;
+            self.ctx.fillStyle = `rgba(${Math.floor(colorised.r)},${Math.floor(
+              colorised.g,
+            )},${Math.floor(colorised.b)},${Math.floor(colorised.a)}`;
             self.ctx.fillRect(pixelPos.x, pixelPos.y, block.size, block.size);
           }),
         );
       }
 
-      jobsLater.push(() => block.calculate().then((calc) => {
-        if (!calc) {
-          incompleteDraw = true;
-          return null;
-        }
-
-        if (drawIndex !== self.drawIndex) {
-          return Promise.resolve();
-        }
-
-        const scaledBlock = self.displayBlockStore.scaleBlock(block);
-        self.displayBlockStore.add(scaledBlock);
-
-        return self.drawBlock(scaledBlock, drawIndex).then((drawn) => {
-          if (!drawn) {
+      jobsLater.push(() =>
+        block.calculate().then(calc => {
+          if (!calc) {
             incompleteDraw = true;
+            return null;
           }
 
-          return scaledBlock;
-        });
-      }));
+          if (drawIndex !== self.drawIndex) {
+            return Promise.resolve();
+          }
+
+          const scaledBlock = self.displayBlockStore.scaleBlock(block);
+          self.displayBlockStore.add(scaledBlock);
+
+          return self.drawBlock(scaledBlock, drawIndex).then(drawn => {
+            if (!drawn) {
+              incompleteDraw = true;
+            }
+
+            return scaledBlock;
+          });
+        }),
+      );
     });
 
     const promises = [];
     promises.push(...jobs.map(job => job()));
 
-    const scaledBlocksPromise = Promise.all(jobsLater.map(job => job()))
-      .then((scaledBlocks) => {
-        if (!incompleteDraw) {
-          self.drawEnd = Date.now();
-          console.log(self.drawEnd - self.drawBegin);
-        }
+    const scaledBlocksPromise = Promise.all(jobsLater.map(job => job())).then(scaledBlocks => {
+      if (!incompleteDraw) {
+        self.drawEnd = Date.now();
+        console.log(self.drawEnd - self.drawBegin);
+      }
 
-        self.coloriser.updateReferenceColor(scaledBlocks);
-      })
-    ;
+      self.coloriser.updateReferenceColor(scaledBlocks);
+    });
 
     promises.push(scaledBlocksPromise);
 
@@ -505,11 +495,7 @@ module.exports = function Renderer(canvas) {
     // TODO: this belongs in the coloriser
     self.coloriser.blockDataToPixelData(block.data, pix);
 
-    self.ctx.putImageData(
-      pix,
-      block.pixelPos.x,
-      block.pixelPos.y,
-    );
+    self.ctx.putImageData(pix, block.pixelPos.x, block.pixelPos.y);
 
     return true;
   });
@@ -525,8 +511,8 @@ module.exports = function Renderer(canvas) {
     self.displayBlockStore.blocks.forEach(self.drawBlock);
   });
 
-  self.scale = function (factor, pos, alreadyDrawnRect) {
-    pos = (pos || self.center);
+  self.scale = (factor, pos, alreadyDrawnRect) => {
+    pos = pos || self.center;
 
     self.center = {
       x: factor * self.center.x + (1 - factor) * pos.x,
@@ -538,7 +524,7 @@ module.exports = function Renderer(canvas) {
     self.draw(pos, alreadyDrawnRect);
   };
 
-  self.moveCenter = function (p) {
+  self.moveCenter = p => {
     self.center.x += p.x;
     self.center.y += p.y;
   };

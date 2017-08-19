@@ -2,7 +2,7 @@
 
 const colorScheme = require('./colorScheme');
 
-module.exports = function coloriser() {
+const coloriser = () => {
   const self = {};
 
   self.colorScheme = colorScheme.createRandom(colorScheme.magicValue);
@@ -11,9 +11,11 @@ module.exports = function coloriser() {
   self.coloringOffset = 0;
   self.currReferenceColor = 0;
 
-  self.colorise = function (pointValue) {
+  self.colorise = pointValue => {
     if (pointValue !== -1) {
-      const interpolant = self.colorScheme(self.coloringMultiplier * pointValue + self.coloringOffset);
+      const interpolant = self.colorScheme(
+        self.coloringMultiplier * pointValue + self.coloringOffset,
+      );
 
       return {
         r: 255 * interpolant[0],
@@ -31,7 +33,7 @@ module.exports = function coloriser() {
     };
   };
 
-  self.blockDataToPixelData = function (blockData, pix) {
+  self.blockDataToPixelData = (blockData, pix) => {
     const limit = blockData.length;
 
     let inc = 0;
@@ -45,7 +47,7 @@ module.exports = function coloriser() {
     }
   };
 
-  self.updateReferenceColor = function (blocks) {
+  self.updateReferenceColor = blocks => {
     const sampleVals = [];
     for (let i = 0; i !== blocks.length; i++) {
       const block = blocks[i];
@@ -67,7 +69,7 @@ module.exports = function coloriser() {
     self.currReferenceColor = sampleVals[Math.floor(0.9 * sampleVals.length)];
   };
 
-  self.randomise = function (seedOffset) {
+  self.randomise = seedOffset => {
     self.colorSchemeSeedOffset += seedOffset || Math.random();
 
     self.colorScheme = colorScheme.createRandom(
@@ -75,14 +77,14 @@ module.exports = function coloriser() {
     );
   };
 
-  self.shift = function (offset) {
-    self.coloringOffset += offset;
-  };
+  self.shift = offset => (self.coloringOffset += offset);
 
-  self.multiplySpeed = function (k) {
+  self.multiplySpeed = k => {
     self.coloringOffset += (1 - k) * self.coloringMultiplier * self.currReferenceColor;
     self.coloringMultiplier *= k;
   };
 
   return self;
 };
+
+module.exports = coloriser;

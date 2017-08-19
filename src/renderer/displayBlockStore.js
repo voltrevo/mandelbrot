@@ -2,15 +2,9 @@
 
 const createLinearApproximator = require('./createLinearApproximator');
 
-const postLogScaling = createLinearApproximator(x => 0.5 * Math.pow(x, 1.3), 0, 25, 101);
+const postLogScaling = createLinearApproximator(x => 0.5 * x ** 1.3, 0, 25, 101);
 
-module.exports = function (
-  mandelCenter,
-  pixelWidth,
-  pixelHeight,
-  mandelWidth,
-  mandelHeight,
-) {
+module.exports = (mandelCenter, pixelWidth, pixelHeight, mandelWidth, mandelHeight) => {
   const self = {};
 
   self.empty = true;
@@ -26,16 +20,15 @@ module.exports = function (
 
   self.pixelSize = self.mandelWidth / self.pixelWidth;
 
-  self.add = function (scaledBlock) {
+  self.add = scaledBlock => {
     self.blocks.push(scaledBlock);
     self.empty = false;
   };
 
-  self.scalePoint = (pointValue, depth) => (
-    pointValue === depth ? -1 : postLogScaling(Math.log(1 + pointValue))
-  );
+  self.scalePoint = (pointValue, depth) =>
+    pointValue === depth ? -1 : postLogScaling(Math.log(1 + pointValue));
 
-  self.scaleBlockData = function (data, depth) {
+  self.scaleBlockData = (data, depth) => {
     const scaledData = [];
 
     for (let i = 0; i !== data.length; i++) {
@@ -46,7 +39,7 @@ module.exports = function (
     return scaledData;
   };
 
-  self.scaleBlock = function (block) {
+  self.scaleBlock = block => {
     const scaledBlock = {
       size: block.size,
       pos: block.pos,
@@ -65,7 +58,7 @@ module.exports = function (
     return scaledBlock;
   };
 
-  self.calculateCentralPixelPos = function (sampleBlock) {
+  self.calculateCentralPixelPos = sampleBlock => {
     const mandelTopLeft = {
       x: self.mandelCenter.x - 0.5 * self.mandelWidth,
       y: self.mandelCenter.y - 0.5 * self.mandelHeight,
