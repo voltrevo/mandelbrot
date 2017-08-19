@@ -9,16 +9,16 @@
   line-height: 40px;
   font-size: 15px;
   border-radius: 40px;
-  background-color: #222;
-  opacity: 0.3;
+  background-color: rgba(32, 32, 32, 0.4);
+  opacity: 0.6;
   position: absolute;
   left: 15px;
   top: 15px;
   transition: opacity 0.3s, left 0.3s;
 }
 
-.control-panel .icon:hover {
-  opacity: 0.6;
+.control-panel .icon:hover:not(.disable-hover) {
+  opacity: 1;
   cursor: pointer;
 }
 
