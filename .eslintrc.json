@@ -11,7 +11,8 @@
     "arrow-parens": "off",
     "no-return-assign": "off",
     "no-constant-condition": "off",
-    "no-confusing-arrow": "off"
+    "no-confusing-arrow": "off",
+    "no-restricted-syntax": "off"
   },
   "env": {
     "browser": true
