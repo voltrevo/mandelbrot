@@ -508,7 +508,7 @@ module.exports = function Renderer(canvas) {
 
     self.scheduler.clear();
     // self.displayBlockStore.blocks.forEach(self.scheduler(self.drawBlock))
-    self.displayBlockStore.blocks.forEach(self.drawBlock);
+    self.displayBlockStore.blocks.forEach(block => self.drawBlock(block, self.drawIndex));
   });
 
   self.scale = (factor, pos, alreadyDrawnRect) => {
