@@ -210,10 +210,6 @@ module.exports = function Renderer(canvas) {
 
       const diff = { x: refPress.curr.x - refPress.start.x, y: refPress.curr.y - refPress.start.y };
 
-      if (diff.x === 0 && diff.y === 0) {
-        return;
-      }
-
       const pixelSize = self.width / canvas.width;
       const aspectRatio = canvas.width / canvas.height;
 
