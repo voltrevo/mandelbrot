@@ -59,6 +59,14 @@ const ControlPanel = controls => {
       controls.changeColoringRate(e.shiftKey ? 1 : -1);
     });
 
+    el.querySelector('#slide-colors-in-button').addEventListener('click', e => {
+      controls.slideColors(e.shiftKey ? 1 : -1);
+    });
+
+    el.querySelector('#slide-colors-out-button').addEventListener('click', e => {
+      controls.slideColors(e.shiftKey ? -1 : 1);
+    });
+
     window.addEventListener('keydown', e => {
       if (e.keyCode === 187 || e.keyCode === 189) {
         // + or - keys

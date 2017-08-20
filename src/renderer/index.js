@@ -54,6 +54,11 @@ module.exports = function Renderer(canvas) {
       self.drawBlocksCached();
     };
 
+    self.controls.slideColors = direction => {
+      self.coloriser.shift(0.05 * direction);
+      self.drawBlocksCached();
+    };
+
     let pressSession = null;
 
     const pressSessionRef = () => {
