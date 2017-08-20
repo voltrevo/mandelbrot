@@ -44,6 +44,7 @@ module.exports = (mandelCenter, pixelWidth, pixelHeight, mandelWidth, mandelHeig
       size: block.size,
       pos: block.pos,
       data: self.scaleBlockData(block.data, block.depth),
+      dist: block.dist,
     };
 
     if (!self.centralPixelPos) {
