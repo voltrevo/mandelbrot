@@ -358,10 +358,7 @@ module.exports = function Renderer(canvas) {
     };
 
     canvas.parentNode.addEventListener('keydown', e => {
-      if (e.keyCode === 68) {
-        self.depth = Number(window.prompt('Enter new depth', '500'));
-        self.draw();
-      } else if (e.keyCode === 65) {
+      if (e.keyCode === 65) {
         // a
         zoom(-1, mousePos);
       } else if (e.keyCode === 90) {
