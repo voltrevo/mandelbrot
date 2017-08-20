@@ -1,5 +1,7 @@
 'use strict';
 
+require('./slider.css');
+
 const SpringSlider = (
   range = (() => {
     const res = document.createElement('input');
