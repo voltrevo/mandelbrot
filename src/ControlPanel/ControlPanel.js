@@ -32,6 +32,23 @@ const ControlPanel = controls => {
   el.querySelector('#information-button').addEventListener('click', () => infoOverlay.icon.click());
 
   (() => {
+    // Zoom
+
+    el.querySelector('#zoom-in-button').addEventListener('click', () => controls.zoom(-1));
+    el.querySelector('#zoom-out-button').addEventListener('click', () => controls.zoom(1));
+
+    window.addEventListener('keydown', e => {
+      if (e.keyCode === 65) {
+        // a
+        controls.zoom(-1, controls.mousePos);
+      } else if (e.keyCode === 90) {
+        // z
+        controls.zoom(1, controls.mousePos);
+      }
+    });
+  })();
+
+  (() => {
     // Color Randomization
     const randomise = e => {
       controls.randomiseColors(e.shiftKey ? -1 : 1);

@@ -332,16 +332,26 @@ module.exports = function Renderer(canvas) {
       const pixelSize = self.width / canvas.width;
       const aspectRatio = canvas.width / canvas.height;
 
-      self.scale(dz < 0 ? 2 / 3 : 3 / 2, {
-        x: self.center.x - 0.5 * self.width + pos.x * self.pixelRatio * pixelSize,
-        y: self.center.y - 0.5 / aspectRatio * self.width + self.pixelRatio * pixelSize * pos.y,
-      });
+      const scalePos = (() => {
+        if (pos) {
+          return {
+            x: self.center.x - 0.5 * self.width + pos.x * self.pixelRatio * pixelSize,
+            y: self.center.y - 0.5 / aspectRatio * self.width + self.pixelRatio * pixelSize * pos.y,
+          };
+        }
+
+        return self.center;
+      })();
+
+      self.scale(dz < 0 ? 2 / 3 : 3 / 2, scalePos);
     };
 
     const mousePos = {
       x: 0,
       y: 0,
     };
+
+    self.controls.mousePos = mousePos;
 
     canvas.addEventListener('mousemove', e => {
       mousePos.x = e.clientX;
@@ -362,15 +372,7 @@ module.exports = function Renderer(canvas) {
       }
     };
 
-    canvas.parentNode.addEventListener('keydown', e => {
-      if (e.keyCode === 65) {
-        // a
-        zoom(-1, mousePos);
-      } else if (e.keyCode === 90) {
-        // z
-        zoom(1, mousePos);
-      }
-    });
+    self.controls.zoom = zoom;
   })();
 
   self.draw = deferAndDropExcess((pos, alreadyDrawnRect) => {
