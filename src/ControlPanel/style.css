@@ -88,3 +88,11 @@
 .control-panel #randomise-colors-button .previous {
   float: right;
 }
+
+.control-panel #depth-button #depth-display {
+  float: right;
+}
+
+.control-panel #depth-button #depth-range {
+  width: 100%;
+}

@@ -4,6 +4,7 @@ const InfoOverlay = require('info-overlay');
 
 const Element = require('./Element.html');
 const InfoContent = require('./info.html');
+const SpringSlider = require('./SpringSlider');
 
 require('./style.css');
 
@@ -31,6 +32,7 @@ const ControlPanel = controls => {
   el.querySelector('#information-button').addEventListener('click', () => infoOverlay.icon.click());
 
   (() => {
+    // Color Randomization
     const randomise = e => {
       controls.randomiseColors(e.shiftKey ? -1 : 1);
     };
@@ -51,6 +53,8 @@ const ControlPanel = controls => {
   })();
 
   (() => {
+    // Color Scaling
+
     el.querySelector('#increase-coloring-rate-button').addEventListener('click', e => {
       controls.changeColoringRate(e.shiftKey ? -1 : 1);
     });
@@ -79,6 +83,36 @@ const ControlPanel = controls => {
         self.drawBlocksCached();
       }
     });
+  })();
+
+  (() => {
+    // Depth
+
+    const formatCommas = n => {
+      let res = '';
+
+      const nStr = String(n);
+      nStr.split('').forEach((digit, i) => {
+        res += digit;
+
+        const digitsRemaining = nStr.length - i - 1;
+
+        if (digitsRemaining % 3 === 0 && digitsRemaining !== 0) {
+          res += ',';
+        }
+      });
+
+      return res;
+    };
+
+    const slider = SpringSlider(el.querySelector('#depth-button #depth-range'));
+    const depth = () => 500 * Math.exp(0.05 * slider.value);
+
+    const depthDisplay = el.querySelector('#depth-display');
+    const updateDepthDisplay = () => (depthDisplay.textContent = formatCommas(Math.floor(depth())));
+    updateDepthDisplay();
+
+    slider.oninput = updateDepthDisplay;
   })();
 
   return el;
