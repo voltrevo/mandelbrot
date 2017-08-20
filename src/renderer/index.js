@@ -358,7 +358,10 @@ module.exports = function Renderer(canvas) {
     };
 
     self.controls.stopDraw = () => {
+      self.scheduler.clear();
+
       if (self.drawBegin && !self.drawEnd) {
+        self.drawBegin = null;
         self.drawIndex++;
       }
     };
