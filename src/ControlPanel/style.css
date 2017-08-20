@@ -36,6 +36,8 @@
   background-color: rgba(50, 50, 50, 0.3);
   width: 255px;
   height: 100vh;
+  max-height: 100vh;
+  overflow-y: auto;
   transition: opacity 0.3s, left 0.3s;
   position: absolute;
   padding: 15px;
