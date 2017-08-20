@@ -352,6 +352,11 @@ module.exports = function Renderer(canvas) {
       mousePos.y = e.clientY;
     });
 
+    self.controls.changeDepth = depth => {
+      self.depth = depth;
+      self.draw();
+    };
+
     canvas.parentNode.addEventListener('keydown', e => {
       if (e.keyCode === 68) {
         self.depth = Number(window.prompt('Enter new depth', '500'));

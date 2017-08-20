@@ -113,6 +113,8 @@ const ControlPanel = controls => {
     updateDepthDisplay();
 
     slider.oninput = updateDepthDisplay;
+
+    slider.onchange = () => controls.changeDepth(depth());
   })();
 
   return el;
