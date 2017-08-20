@@ -44,7 +44,7 @@ module.exports = function Renderer(canvas) {
 
     self.controls = {};
 
-    self.controls.randomiseColors = randShift => {
+    self.controls.changeColors = randShift => {
       self.coloriser.randomise(randShift);
       self.drawBlocksCached(); // TODO: rename to redrawCurrentBlocks?
     };

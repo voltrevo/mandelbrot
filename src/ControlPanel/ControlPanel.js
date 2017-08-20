@@ -49,22 +49,20 @@ const ControlPanel = controls => {
   })();
 
   (() => {
-    // Color Randomization
-    const randomise = e => {
-      controls.randomiseColors(e.shiftKey ? -1 : 1);
-    };
+    // Color Change
 
-    el.querySelector('#randomise-colors-button').addEventListener('click', randomise);
+    el.querySelector('#change-colors-button .plus').addEventListener('click', () => {
+      controls.changeColors(1);
+    });
 
-    el.querySelector('#randomise-colors-button .previous').addEventListener('click', e => {
-      controls.randomiseColors(e.shiftKey ? 1 : -1);
-      e.stopPropagation();
+    el.querySelector('#change-colors-button .minus').addEventListener('click', () => {
+      controls.changeColors(-1);
     });
 
     window.addEventListener('keydown', e => {
       if (e.keyCode === 67) {
         // 'c'
-        randomise(e);
+        controls.changeColors(e.shiftKey ? -1 : 1);
       }
     });
   })();
@@ -72,20 +70,20 @@ const ControlPanel = controls => {
   (() => {
     // Color Scaling
 
-    el.querySelector('#increase-coloring-rate-button').addEventListener('click', e => {
-      controls.changeColoringRate(e.shiftKey ? -1 : 1);
+    el.querySelector('#coloring-rate-button .plus').addEventListener('click', () => {
+      controls.changeColoringRate(1);
     });
 
-    el.querySelector('#decrease-coloring-rate-button').addEventListener('click', e => {
-      controls.changeColoringRate(e.shiftKey ? 1 : -1);
+    el.querySelector('#coloring-rate-button .minus').addEventListener('click', () => {
+      controls.changeColoringRate(-1);
     });
 
-    el.querySelector('#slide-colors-in-button').addEventListener('click', e => {
-      controls.slideColors(e.shiftKey ? 1 : -1);
+    el.querySelector('#slide-colors-button .plus').addEventListener('click', () => {
+      controls.slideColors(-1);
     });
 
-    el.querySelector('#slide-colors-out-button').addEventListener('click', e => {
-      controls.slideColors(e.shiftKey ? -1 : 1);
+    el.querySelector('#slide-colors-button .minus').addEventListener('click', () => {
+      controls.slideColors(1);
     });
 
     window.addEventListener('keydown', e => {
