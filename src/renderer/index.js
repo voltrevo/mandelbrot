@@ -210,6 +210,11 @@ module.exports = function Renderer(canvas) {
 
       const diff = { x: refPress.curr.x - refPress.start.x, y: refPress.curr.y - refPress.start.y };
 
+      if (diff.x === 0 && diff.y === 0 && !pressSession.zoom) {
+        pressSession.zoom = 1.5 ** (press.shiftKey ? -1 : 1);
+        pressSession.touchZoom = true;
+      }
+
       const pixelSize = self.width / canvas.width;
       const aspectRatio = canvas.width / canvas.height;
 
@@ -239,7 +244,7 @@ module.exports = function Renderer(canvas) {
       });
 
       if (pressSession.zoom) {
-        self.scale(1 / pressSession.zoom, pos, alreadyDrawnRect);
+        self.scale(1 / pressSession.zoom, pos, !pressSession.touchZoom && alreadyDrawnRect);
       } else {
         self.draw(pos, alreadyDrawnRect);
       }
@@ -261,6 +266,7 @@ module.exports = function Renderer(canvas) {
         x: e.clientX,
         y: e.clientY,
         id: `click${clickCount}`,
+        shiftKey: e.shiftKey,
       });
     });
 
@@ -269,6 +275,7 @@ module.exports = function Renderer(canvas) {
         x: e.clientX,
         y: e.clientY,
         id: `click${clickCount}`,
+        shiftKey: e.shiftKey,
       });
     });
 
@@ -279,6 +286,7 @@ module.exports = function Renderer(canvas) {
         x: e.clientX,
         y: e.clientY,
         id: `click${clickCount}`,
+        shiftKey: e.shiftKey,
       });
 
       clickCount++;
@@ -292,6 +300,7 @@ module.exports = function Renderer(canvas) {
           x: touch.clientX,
           y: touch.clientY,
           id: `touch${touch.identifier}`,
+          shiftKey: e.shiftKey,
         });
       });
     });
@@ -304,6 +313,7 @@ module.exports = function Renderer(canvas) {
           x: touch.clientX,
           y: touch.clientY,
           id: `touch${touch.identifier}`,
+          shiftKey: e.shiftKey,
         });
       });
     });
@@ -314,6 +324,7 @@ module.exports = function Renderer(canvas) {
           x: touch.clientX,
           y: touch.clientY,
           id: `touch${touch.identifier}`,
+          shiftKey: e.shiftKey,
         });
       });
     });
@@ -324,6 +335,7 @@ module.exports = function Renderer(canvas) {
           x: touch.clientX,
           y: touch.clientY,
           id: `touch${touch.identifier}`,
+          shiftKey: e.shiftKey,
         });
       });
     });
@@ -343,7 +355,7 @@ module.exports = function Renderer(canvas) {
         return self.center;
       })();
 
-      self.scale(dz < 0 ? 2 / 3 : 3 / 2, scalePos);
+      self.scale(1.5 ** dz, scalePos);
     };
 
     const mousePos = {
