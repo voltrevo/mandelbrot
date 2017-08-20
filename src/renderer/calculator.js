@@ -141,13 +141,8 @@ module.exports = () => {
           };
 
           if (isPosInsideDrawnRect(block.pos) && isPosInsideDrawnRect(lastPixelPos)) {
-            if (alreadyDrawnRect.needsRedraw) {
-              blocksToCalculateLater.push(block);
-              block.later = true;
-            }
-
-            // Skip this block because it is completely inside the already drawn
-            // rect.
+            blocksToCalculateLater.push(block);
+            block.later = true;
             continue;
           }
         }
