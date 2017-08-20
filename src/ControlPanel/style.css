@@ -80,7 +80,7 @@
   transition: background-color 0.3s;
 }
 
-.control-panel .panel .button:hover {
+.control-panel .panel .button:hover:not(.disable-hover) {
   background-color: rgba(255, 255, 255, 0.1);
   cursor: pointer;
 }
@@ -95,4 +95,25 @@
 
 .control-panel #depth-button #depth-range {
   width: 100%;
+}
+
+.control-panel .plus,
+.control-panel .minus {
+  float: right;
+  height: 30px;
+  width: 30px;
+  border-radius: 5px;
+  line-height: 31px;
+  margin-left: 10px;
+  margin-top: -2px;
+  margin-right: -2px;
+  text-align: center;
+  background-color: rgba(255, 255, 255, 0.05);
+  transition: background-color 0.3s;
+}
+
+.control-panel .plus:hover,
+.control-panel .minus:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
 }

@@ -34,8 +34,8 @@ const ControlPanel = controls => {
   (() => {
     // Zoom
 
-    el.querySelector('#zoom-in-button').addEventListener('click', () => controls.zoom(-1));
-    el.querySelector('#zoom-out-button').addEventListener('click', () => controls.zoom(1));
+    el.querySelector('#zoom-button .plus').addEventListener('click', () => controls.zoom(-1));
+    el.querySelector('#zoom-button .minus').addEventListener('click', () => controls.zoom(1));
 
     window.addEventListener('keydown', e => {
       if (e.keyCode === 65) {
