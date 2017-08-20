@@ -49,22 +49,10 @@ module.exports = function Renderer(canvas) {
       self.drawBlocksCached(); // TODO: rename to redrawCurrentBlocks?
     };
 
-    canvas.parentNode.addEventListener('keydown', evt => {
-      // if (evt.keyCode === 67) {
-      //   self.coloriser.randomise(!evt.shiftKey ? 1 : -1);
-      //   self.drawBlocksCached(); // TODO: rename to redrawCurrentBlocks?
-      // }
-
-      if (evt.keyCode === 187 || evt.keyCode === 189) {
-        if (evt.shiftKey) {
-          self.coloriser.shift(0.05 * (188 - evt.keyCode));
-        } else {
-          self.coloriser.multiplySpeed(Math.exp(0.05 * (188 - evt.keyCode)));
-        }
-
-        self.drawBlocksCached();
-      }
-    });
+    self.controls.changeColoringRate = direction => {
+      self.coloriser.multiplySpeed(Math.exp(0.05 * direction));
+      self.drawBlocksCached();
+    };
 
     let pressSession = null;
 

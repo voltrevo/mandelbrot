@@ -50,6 +50,29 @@ const ControlPanel = controls => {
     });
   })();
 
+  (() => {
+    el.querySelector('#increase-coloring-rate-button').addEventListener('click', e => {
+      controls.changeColoringRate(e.shiftKey ? -1 : 1);
+    });
+
+    el.querySelector('#decrease-coloring-rate-button').addEventListener('click', e => {
+      controls.changeColoringRate(e.shiftKey ? 1 : -1);
+    });
+
+    window.addEventListener('keydown', e => {
+      if (e.keyCode === 187 || e.keyCode === 189) {
+        // + or - keys
+        if (e.shiftKey) {
+          // self.coloriser.shift(0.05 * (188 - evt.keyCode));
+        } else {
+          controls.changeColoringRate(188 - e.keyCode);
+        }
+
+        self.drawBlocksCached();
+      }
+    });
+  })();
+
   return el;
 };
 
