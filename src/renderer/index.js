@@ -357,6 +357,12 @@ module.exports = function Renderer(canvas) {
       self.draw();
     };
 
+    self.controls.stopDraw = () => {
+      if (self.drawBegin && !self.drawEnd) {
+        self.drawIndex++;
+      }
+    };
+
     canvas.parentNode.addEventListener('keydown', e => {
       if (e.keyCode === 65) {
         // a

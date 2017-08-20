@@ -112,7 +112,10 @@ const ControlPanel = controls => {
     const updateDepthDisplay = () => (depthDisplay.textContent = formatCommas(depth()));
     updateDepthDisplay();
 
-    slider.oninput = updateDepthDisplay;
+    slider.oninput = () => {
+      controls.stopDraw();
+      updateDepthDisplay();
+    };
 
     slider.onchange = () => controls.changeDepth(depth());
   })();
