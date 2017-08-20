@@ -121,7 +121,7 @@ const ControlPanel = controls => {
     };
 
     const slider = SpringSlider(el.querySelector('#depth-button #depth-range'));
-    const depth = () => Math.floor(500 * Math.exp(0.05 * slider.value));
+    const depth = () => Math.floor(500 * Math.exp(0.02 * slider.value));
 
     const depthDisplay = el.querySelector('#depth-display');
     const updateDepthDisplay = () => (depthDisplay.textContent = formatCommas(depth()));
